@@ -68,6 +68,7 @@ The image is built and pushed by `.github/workflows/docker-publish.yml`.
 - Categories can be created (+) and deleted (−) via the header controls.
 - Bookmarks can be added on the site itself via the "+ Bookmark" button (category, title, URL, optional description) — useful on mobile, where no extension is available.
 - **Import/Export**: the header has Import/Export buttons for the standard browser bookmarks.html format (Netscape). On import, ungrouped toolbar bookmarks go to the **Default** category (always listed first); toolbar sub-folders and other folders become categories. Export reverses the mapping: Default → toolbar, categories → folders.
+- **Export caveat (Firefox)**: Firefox only honors the toolbar marker (`PERSONAL_TOOLBAR_FOLDER`) during initial profile migration — not when importing via the Library. Imported content therefore lands in the Bookmarks Menu as a folder named "Bookmarks Toolbar"; drag its contents onto the real toolbar once after importing. The exported file itself is exactly the format Firefox writes.
 - Descriptions show on hover (desktop) or via the ⓘ button next to each entry.
 
 ## Browser extension
