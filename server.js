@@ -23,10 +23,14 @@ let saveTimer = null;
 function persist() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-    const tmp = DATA_FILE + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(store));
-    fs.renameSync(tmp, DATA_FILE);
+    try {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+      const tmp = DATA_FILE + '.tmp';
+      fs.writeFileSync(tmp, JSON.stringify(store));
+      fs.renameSync(tmp, DATA_FILE);
+    } catch (e) {
+      console.error('persist failed:', e.message);
+    }
   }, 50);
 }
 
