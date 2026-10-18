@@ -8,6 +8,7 @@ const titleEl = $('title');
 const descEl = $('desc');
 const statusEl = $('status');
 const saveBtn = $('save');
+const grantBtn = $('grant');
 
 function setStatus(msg, err) {
   statusEl.textContent = msg;
@@ -19,9 +20,30 @@ async function getServerUrl() {
   return serverUrl || '';
 }
 
+async function hasOriginPermission(origin) {
+  if (typeof api.permissions?.contains !== 'function') return true;
+  return api.permissions.contains({ origins: [origin + '/*'] });
+}
+
+async function requestOriginPermission(origin) {
+  if (typeof api.permissions?.request !== 'function') return true;
+  return api.permissions.request({ origins: [origin + '/*'] });
+}
+
 async function loadCategories() {
   const base = serverEl.value.replace(/\/+$/, '');
   if (!base) return [];
+  let origin;
+  try {
+    origin = new URL(base).origin;
+  } catch {
+    throw new Error('invalid server URL');
+  }
+  if (!(await hasOriginPermission(origin))) {
+    const err = new Error('permission missing');
+    err.needsPermission = origin;
+    throw err;
+  }
   const res = await fetch(base + '/api/categories');
   if (!res.ok) throw new Error('categories: ' + res.status);
   return res.json();
@@ -55,17 +77,45 @@ async function init() {
     fillCategories(await loadCategories());
   } catch (e) {
     fillCategories([]);
-    setStatus('Could not load categories — check the server URL. You can still type a new category below.', true);
+    if (e.needsPermission) {
+      setStatus('The extension needs permission to access your server. Click Grant access.', true);
+      grantBtn.hidden = false;
+    } else {
+      setStatus('Could not load categories — check the server URL. You can still type a new category below.', true);
+    }
   }
 }
 
 serverEl.addEventListener('change', async () => {
   await api.storage.local.set({ serverUrl: serverEl.value.trim() });
+  grantBtn.hidden = true;
   try {
     fillCategories(await loadCategories());
     setStatus('');
   } catch (e) {
-    setStatus('Could not load categories from that URL.', true);
+    if (e.needsPermission) {
+      setStatus('The extension needs permission to access your server. Click Grant access.', true);
+      grantBtn.hidden = false;
+    } else {
+      setStatus('Could not load categories from that URL.', true);
+    }
+  }
+});
+
+grantBtn.addEventListener('click', async () => {
+  try {
+    const base = serverEl.value.replace(/\/+$/, '');
+    const origin = new URL(base).origin;
+    const granted = await requestOriginPermission(origin);
+    if (!granted) {
+      setStatus('Permission denied. The extension cannot reach the server without it.', true);
+      return;
+    }
+    grantBtn.hidden = true;
+    fillCategories(await loadCategories());
+    setStatus('');
+  } catch (e) {
+    setStatus('Error: ' + e.message, true);
   }
 });
 
