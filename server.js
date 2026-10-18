@@ -255,23 +255,28 @@ route('PATCH', /^\/api\/bookmarks\/([a-z0-9]+)$/, async (req, res, id) => {
   send(res, 200, bm);
 });
 
-route('POST', /^\/api\/bookmarks\/([a-z0-9]+)\/(up|down)$/, (req, res, id, dir) => {
+route('POST', /^\/api\/bookmarks\/([a-z0-9]+)\/position$/, async (req, res, id) => {
   const i = store.bookmarks.findIndex((b) => b.id === id);
   if (i === -1) return send(res, 404, { error: 'not found' });
   const bm = store.bookmarks[i];
-  let j = -1;
-  if (dir === 'up') {
-    for (let k = i - 1; k >= 0; k--) {
-      if (store.bookmarks[k].category === bm.category) { j = k; break; }
-    }
-  } else {
-    for (let k = i + 1; k < store.bookmarks.length; k++) {
-      if (store.bookmarks[k].category === bm.category) { j = k; break; }
-    }
+  const body = await readBody(req);
+  const pos = Number(body.position);
+  const count = store.bookmarks.filter((b) => b.category === bm.category).length;
+  if (!Number.isInteger(pos) || pos < 0 || pos > count - 1) {
+    return send(res, 400, { error: 'invalid position' });
   }
-  if (j === -1) return send(res, 200, { ok: true });
   const [moved] = store.bookmarks.splice(i, 1);
-  store.bookmarks.splice(j, 0, moved);
+  const sibAfter = store.bookmarks.reduce((acc, b, idx) => {
+    if (b.category === bm.category) acc.push(idx);
+    return acc;
+  }, []);
+  let insertAt;
+  if (pos === sibAfter.length) {
+    insertAt = sibAfter[sibAfter.length - 1] + 1;
+  } else {
+    insertAt = sibAfter[pos];
+  }
+  store.bookmarks.splice(insertAt, 0, moved);
   persist();
   send(res, 200, { ok: true });
 });

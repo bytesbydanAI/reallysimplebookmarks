@@ -25,6 +25,7 @@ function esc(s) {
 
 const hoverInfo = $('#hoverInfo');
 let reorderCategory = null;
+let reorderTotal = 0;
 function startEdit(li, b) {
   const moveSel = li.querySelector('.moveSel');
   if (moveSel && !moveSel.hidden) moveSel.hidden = true;
@@ -90,30 +91,32 @@ function fillMoveSelect(sel, current) {
   sel.value = current;
 }
 
-function bookmarkRow(b, reordering) {
+function bookmarkRow(b, reordering, rank) {
   const li = document.createElement('li');
   li.dataset.id = b.id;
 
   if (reordering) {
-    const up = document.createElement('button');
-    up.className = 'rowBtn';
-    up.textContent = '↑';
-    up.title = 'Move up';
-    up.onclick = async () => {
-      try { await api('/api/bookmarks/' + b.id + '/up', { method: 'POST' }); render(); } catch (e) { alert('Error: ' + e.message); }
-    };
-    const down = document.createElement('button');
-    down.className = 'rowBtn';
-    down.textContent = '↓';
-    down.title = 'Move down';
-    down.onclick = async () => {
-      try { await api('/api/bookmarks/' + b.id + '/down', { method: 'POST' }); render(); } catch (e) { alert('Error: ' + e.message); }
+    const pos = document.createElement('span');
+    pos.className = 'catPos';
+    pos.dataset.clickable = '1';
+    pos.textContent = `(${rank})`;
+    pos.title = 'Click to change position';
+    pos.onclick = async () => {
+      const input = prompt(`Move bookmark to position (0–${reorderTotal - 1}):`, rank);
+      if (input === null) return;
+      const p = parseInt(input, 10);
+      if (isNaN(p) || p === rank) return;
+      try {
+        await api('/api/bookmarks/' + b.id + '/position', { method: 'POST', body: JSON.stringify({ position: p }) });
+        render();
+      } catch (e) {
+        alert(e.message === 'invalid position' ? 'Enter a valid position number.' : 'Error: ' + e.message);
+      }
     };
     const lbl = document.createElement('span');
     lbl.textContent = b.title;
     lbl.className = 'reorderLbl';
-    li.appendChild(up);
-    li.appendChild(down);
+    li.appendChild(pos);
     li.appendChild(lbl);
     return li;
   }
@@ -217,6 +220,7 @@ function fillColumn(cat, bookmarks, position) {
   spacer.style.flex = '1';
   heading.appendChild(spacer);
   const reordering = reorderCategory === cat.name;
+  if (reordering) reorderTotal = bookmarks.length;
   const re = document.createElement('button');
   re.className = 'reorderBtn';
   re.textContent = '⇅';
@@ -229,7 +233,7 @@ function fillColumn(cat, bookmarks, position) {
   heading.appendChild(re);
   div.appendChild(heading);
   const ul = document.createElement('ul');
-  for (const b of bookmarks) ul.appendChild(bookmarkRow(b, reordering));
+  bookmarks.forEach((b, idx) => ul.appendChild(bookmarkRow(b, reordering, idx)));
   div.appendChild(ul);
   return div;
 }
