@@ -78,7 +78,20 @@ main {
 }
 .desc.open { display: block; }
 @media (hover: hover) {
-  .category li:hover .desc { display: block; }
+  .category li { position: relative; }
+  .category li:hover .desc {
+    display: block;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    margin: 0;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  }
 }
 .catActions { display: inline-flex; gap: 2px; }
 .catActions button {
