@@ -32,7 +32,23 @@ main {
   margin: 0 0 6px;
   border-bottom: 1px solid #eee;
   padding-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
+.reorderBtn {
+  border: 1px solid #ccc;
+  background: #fff;
+  font: inherit;
+  font-size: 11px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+}
+.reorderBtn:hover { background: #f0f0f0; }
 .category ul { list-style: none; margin: 0; padding: 0; }
 .category li {
   display: flex;

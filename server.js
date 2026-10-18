@@ -21,6 +21,16 @@ function loadStore() {
 
 let store = loadStore();
 let saveTimer = null;
+(function migrate() {
+  const legacy = store.categories.find((c) => c.name === 'Default');
+  if (legacy && !store.categories.some((c) => c.name === 'Home')) {
+    legacy.name = 'Home';
+    for (const b of store.bookmarks) {
+      if (b.category === 'Default') b.category = 'Home';
+    }
+    persist();
+  }
+})();
 function persist() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
@@ -81,8 +91,8 @@ function route(method, pattern, handler) {
 }
 
 route('GET', /^\/api\/categories$/, (req, res) => {
-  const def = store.categories.filter((c) => c.name === 'Default');
-  const others = store.categories.filter((c) => c.name !== 'Default');
+  const def = store.categories.filter((c) => c.name === 'Home');
+  const others = store.categories.filter((c) => c.name !== 'Home');
   send(res, 200, [...def, ...others]);
 });
 
@@ -99,7 +109,7 @@ route('POST', /^\/api\/import$/, async (req, res) => {
   }
 
   const catNames = new Set(parsed.folders.map((f) => f.name));
-  catNames.add('Default');
+  catNames.add('Home');
   for (const name of catNames) {
     if (!store.categories.find((c) => c.name === name)) {
       store.categories.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name });
@@ -124,7 +134,7 @@ route('POST', /^\/api\/import$/, async (req, res) => {
     seen.set(b.url, bm);
     added++;
   };
-  for (const b of parsed.defaultBookmarks) mk(b, 'Default');
+  for (const b of parsed.defaultBookmarks) mk(b, 'Home');
   for (const f of parsed.folders) for (const b of f.bookmarks) mk(b, f.name);
 
   persist();
@@ -132,10 +142,10 @@ route('POST', /^\/api\/import$/, async (req, res) => {
 });
 
 route('GET', /^\/api\/export$/, (req, res) => {
-  const defaultBms = store.bookmarks.filter((b) => b.category === 'Default');
+  const defaultBms = store.bookmarks.filter((b) => b.category === 'Home');
   const byCat = {};
   for (const b of store.bookmarks) {
-    if (b.category === 'Default') continue;
+    if (b.category === 'Home') continue;
     (byCat[b.category] = byCat[b.category] || []).push(b);
   }
   const html = serializeBookmarksHtml(defaultBms, byCat);
@@ -159,14 +169,27 @@ route('POST', /^\/api\/categories$/, async (req, res) => {
   send(res, 201, cat);
 });
 
+route('POST', /^\/api\/categories\/([a-z0-9]+)\/(up|down)$/, (req, res, id, dir) => {
+  const i = store.categories.findIndex((c) => c.id === id);
+  if (i === -1) return send(res, 404, { error: 'not found' });
+  const homeIdx = store.categories.findIndex((c) => c.name === 'Home');
+  const j = dir === 'up' ? i - 1 : i + 1;
+  if (j < 0 || j >= store.categories.length) return send(res, 200, { ok: true });
+  if (j === homeIdx || i === homeIdx) return send(res, 400, { error: 'Home stays first' });
+  const [cat] = store.categories.splice(i, 1);
+  store.categories.splice(j, 0, cat);
+  persist();
+  send(res, 200, { ok: true });
+});
+
 route('PATCH', /^\/api\/categories\/([a-z0-9]+)$/, async (req, res, id) => {
   const cat = store.categories.find((c) => c.id === id);
   if (!cat) return send(res, 404, { error: 'not found' });
-  if (cat.name === 'Default') return send(res, 400, { error: 'Default category cannot be renamed' });
+  if (cat.name === 'Home') return send(res, 400, { error: 'Home category cannot be renamed' });
   const body = await readBody(req);
   const name = cleanStr(body.name, 100);
   if (!name) return send(res, 400, { error: 'name required' });
-  if (name === 'Default') return send(res, 400, { error: 'name reserved' });
+  if (name === 'Home') return send(res, 400, { error: 'name reserved' });
   if (store.categories.some((c) => c.id !== id && c.name.toLowerCase() === name.toLowerCase())) {
     return send(res, 409, { error: 'category already exists' });
   }
@@ -182,7 +205,7 @@ route('PATCH', /^\/api\/categories\/([a-z0-9]+)$/, async (req, res, id) => {
 route('DELETE', /^\/api\/categories\/([a-z0-9]+)$/, (req, res, id) => {
   const cat = store.categories.find((c) => c.id === id);
   if (!cat) return send(res, 404, { error: 'not found' });
-  if (cat.name === 'Default') return send(res, 400, { error: 'Default category cannot be deleted' });
+  if (cat.name === 'Home') return send(res, 400, { error: 'Home category cannot be deleted' });
   const count = store.bookmarks.filter((b) => b.category === cat.name).length;
   if (count > 0 && !new URL(req.url, 'http://localhost').searchParams.get('force')) {
     return send(res, 409, { error: 'category not empty', count });

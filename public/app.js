@@ -152,11 +152,31 @@ function bookmarkRow(b) {
   return li;
 }
 
-function fillColumn(h2, bookmarks) {
+function fillColumn(cat, bookmarks) {
   const div = document.createElement('div');
   div.className = 'category';
   const heading = document.createElement('h2');
-  heading.textContent = `${h2} (${bookmarks.length})`;
+  const span = document.createElement('span');
+  span.textContent = `${cat.name} (${bookmarks.length})`;
+  heading.appendChild(span);
+  if (cat.name !== 'Home') {
+    const up = document.createElement('button');
+    up.className = 'reorderBtn';
+    up.textContent = '↑';
+    up.title = 'Move category up';
+    up.onclick = async () => {
+      try { await api('/api/categories/' + cat.id + '/up', { method: 'POST' }); render(); } catch (e) { alert('Error: ' + e.message); }
+    };
+    heading.appendChild(up);
+    const down = document.createElement('button');
+    down.className = 'reorderBtn';
+    down.textContent = '↓';
+    down.title = 'Move category down';
+    down.onclick = async () => {
+      try { await api('/api/categories/' + cat.id + '/down', { method: 'POST' }); render(); } catch (e) { alert('Error: ' + e.message); }
+    };
+    heading.appendChild(down);
+  }
   div.appendChild(heading);
   const ul = document.createElement('ul');
   for (const b of bookmarks) ul.appendChild(bookmarkRow(b));
@@ -197,11 +217,13 @@ async function render() {
     if (!byCat.has(b.category)) byCat.set(b.category, []);
     byCat.get(b.category).push(b);
   }
-  const order = cats.map((c) => c.name).filter((n) => byCat.has(n));
-  for (const n of byCat.keys()) if (!order.includes(n)) order.push(n);
+  const order = cats.filter((c) => byCat.has(c.name)).map((c) => c);
+  for (const name of byCat.keys()) {
+    if (!order.some((c) => c.name === name)) order.push({ id: '', name });
+  }
 
-  for (const name of order) {
-    columns.appendChild(fillColumn(name, byCat.get(name)));
+  for (const cat of order) {
+    columns.appendChild(fillColumn(cat, byCat.get(cat.name)));
   }
 }
 
@@ -221,7 +243,7 @@ $('#addCategory').addEventListener('click', async () => {
 $('#renameCategory').addEventListener('click', async () => {
   const name = filter.value;
   if (!name) return alert('Select a category to rename first.');
-  if (name === 'Default') return alert('Default category cannot be renamed.');
+  if (name === 'Home') return alert('Home category cannot be renamed.');
   const newName = prompt(`Rename category "${name}" to:`, name);
   if (!newName || !newName.trim() || newName.trim() === name) return;
   const cats = await api('/api/categories');
