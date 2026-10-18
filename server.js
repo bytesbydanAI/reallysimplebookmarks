@@ -32,6 +32,7 @@ let saveTimer = null;
   }
 })();
 function persist() {
+  normalizeHomeFirst();
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     try {
@@ -90,10 +91,16 @@ function route(method, pattern, handler) {
   routes.push({ method, pattern, handler });
 }
 
+function normalizeHomeFirst() {
+  const i = store.categories.findIndex((c) => c.name === 'Home');
+  if (i > 0) {
+    const [home] = store.categories.splice(i, 1);
+    store.categories.unshift(home);
+  }
+}
+
 route('GET', /^\/api\/categories$/, (req, res) => {
-  const def = store.categories.filter((c) => c.name === 'Home');
-  const others = store.categories.filter((c) => c.name !== 'Home');
-  send(res, 200, [...def, ...others]);
+  send(res, 200, store.categories);
 });
 
 route('POST', /^\/api\/import$/, async (req, res) => {
