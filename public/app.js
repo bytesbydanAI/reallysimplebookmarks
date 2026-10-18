@@ -357,6 +357,19 @@ $('#importFile').addEventListener('change', async (e) => {
     alert('Import failed: ' + err.message);
   }
 });
+$('#clearAllBtn').addEventListener('click', async () => {
+  const input = prompt('This deletes ALL categories and bookmarks.\nType DELETE to confirm:');
+  if (input !== 'DELETE') return;
+  try {
+    await api('/api/all', { method: 'DELETE', body: JSON.stringify({ confirm: 'DELETE' }) });
+    filter.value = '';
+    reorderCategory = null;
+    await render();
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+});
+
 $('#exportBtn').addEventListener('click', () => {
   window.location = '/api/export';
 });

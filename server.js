@@ -235,6 +235,15 @@ route('PATCH', /^\/api\/categories\/([a-z0-9]+)$/, async (req, res, id) => {
   send(res, 200, cat);
 });
 
+route('DELETE', /^\/api\/all$/, async (req, res) => {
+  const body = await readBody(req);
+  if (body.confirm !== 'DELETE') return send(res, 400, { error: 'confirmation required' });
+  store.categories = [{ id: newId(), name: 'Home' }];
+  store.bookmarks = [];
+  persist();
+  send(res, 200, { ok: true });
+});
+
 route('DELETE', /^\/api\/categories\/([a-z0-9]+)$/, (req, res, id) => {
   const cat = store.categories.find((c) => c.id === id);
   if (!cat) return send(res, 404, { error: 'not found' });

@@ -63,6 +63,7 @@ The image is built and pushed by `.github/workflows/docker-publish.yml`.
 | GET | `/api/bookmarks` | List bookmarks |
 | POST | `/api/bookmarks` | Create bookmark `{ title, url, category, description? }` |
 | DELETE | `/api/bookmarks/:id` | Delete a bookmark |
+| DELETE | `/api/all` | Wipe all categories and bookmarks `{ confirm: "DELETE" }`; keeps empty Home category |
 | PATCH | `/api/bookmarks/:id` | Update bookmark `{ category?, title?, description? }` — use for moving entries |
 
 ## Website
@@ -114,7 +115,7 @@ makes requests with a JSON content type (no cookies).
 node test/test.js
 ```
 
-36 integration tests covering: category and bookmark CRUD, case-insensitive
+38 integration tests covering: category and bookmark CRUD, case-insensitive
 duplicates, category positions (Home pinned first), bookmark positions,
 category moves with contiguous-block normalization, rename cascades, force
 delete, Default→Home migration, import/export round-trip with dedup, CORS

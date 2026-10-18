@@ -166,6 +166,14 @@ async function testPositions() {
     const [sd3] = await del('/api/categories/h');
     check('Home cannot be deleted', sd3 === 400);
 
+    // clear all
+    const [sc1] = await del('/api/all');
+    check('clear all without confirm rejected', sc1 === 400);
+    const [sc2] = await j('/api/all', { method: 'DELETE', body: JSON.stringify({ confirm: 'DELETE' }) });
+    const [, cleared] = await j('/api/bookmarks');
+    const [, clearedCats] = await j('/api/categories');
+    check('clear all wipes bookmarks, keeps only Home', sc2 === 200 && cleared.length === 0 && clearedCats.length === 1 && clearedCats[0].name === 'Home');
+
     // OPTIONS preflight
     const opt = await fetch(BASE + '/api/bookmarks', { method: 'OPTIONS' });
     check('OPTIONS preflight 204 bodyless', opt.status === 204);
