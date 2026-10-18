@@ -77,6 +77,9 @@ async function render() {
 
   const previous = filter.value;
   filter.replaceChildren();
+  const bmCat = $('#bmCategory');
+  const bmPrevious = bmCat.value;
+  bmCat.replaceChildren();
   const all = document.createElement('option');
   all.value = '';
   all.textContent = 'All categories';
@@ -86,9 +89,12 @@ async function render() {
     o.value = c.name;
     o.textContent = c.name;
     filter.appendChild(o);
+    const o2 = o.cloneNode(true);
+    bmCat.appendChild(o2);
   }
 
   filter.value = [...filter.options].some((o) => o.value === previous) ? previous : '';
+  bmCat.value = [...bmCat.options].some((o) => o.value === bmPrevious) ? bmPrevious : (bmPrevious ? '' : bmCat.options[0]?.value || '');
   const selected = filter.value;
   const visible = selected ? bms.filter((b) => b.category === selected) : bms;
   emptyMsg.hidden = visible.length > 0;
@@ -133,6 +139,51 @@ $('#delCategory').addEventListener('click', async () => {
     await render();
   } catch (e) {
     alert(e.message === 'category not empty' ? `"${name}" still has bookmarks. Delete or move them first.` : 'Error: ' + e.message);
+  }
+});
+
+const addForm = $('#addBookmarkForm');
+const bmTitle = $('#bmTitle');
+const bmUrl = $('#bmUrl');
+const bmDesc = $('#bmDesc');
+const bmStatus = $('#bmStatus');
+
+$('#addBookmarkBtn').addEventListener('click', () => {
+  addForm.hidden = !addForm.hidden;
+  if (!addForm.hidden) {
+    const cats = [...$('#bmCategory').options].map((o) => o.value).filter(Boolean);
+    if (!cats.length) {
+      bmStatus.textContent = 'Create a category first (+ button).';
+      $('#bmCategory').focus();
+      return;
+    }
+    bmStatus.textContent = '';
+    if (!$('#bmCategory').value) $('#bmCategory').focus();
+    else bmTitle.focus();
+  }
+});
+
+$('#bmCancel').addEventListener('click', () => {
+  addForm.hidden = true;
+  bmStatus.textContent = '';
+});
+
+addForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const category = $('#bmCategory').value;
+  const title = bmTitle.value.trim();
+  const url = bmUrl.value.trim();
+  if (!category) return (bmStatus.textContent = 'Select a category.');
+  if (!title) return (bmStatus.textContent = 'Title required.');
+  if (!/^https?:\/\//i.test(url)) return (bmStatus.textContent = 'URL must start with http(s)://');
+  try {
+    await api('/api/bookmarks', { method: 'POST', body: JSON.stringify({ title, url, category, description: bmDesc.value.trim() }) });
+    bmTitle.value = bmUrl.value = bmDesc.value = '';
+    bmStatus.textContent = '';
+    addForm.hidden = true;
+    await render();
+  } catch (err) {
+    bmStatus.textContent = 'Error: ' + err.message;
   }
 });
 

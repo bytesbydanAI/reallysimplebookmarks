@@ -91,8 +91,26 @@ main {
   cursor: pointer;
   line-height: 1;
 }
+.headerActions { display: flex; align-items: center; gap: 8px; }
+#addBookmarkBtn { white-space: nowrap; }
+#addBookmarkForm {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #ddd;
+  background: #fafafa;
+}
+#addBookmarkForm[hidden] { display: none; }
+.formRow { display: flex; gap: 8px; align-items: end; }
+.formRow label { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: #555; }
+.formRow button { font: inherit; padding: 3px 10px; }
+#bmStatus { font-size: 12px; color: #c00; }
 #empty { padding: 12px; color: #666; }
 
 @media (max-width: 640px) {
   main { grid-template-columns: 1fr; }
+  header { flex-wrap: wrap; }
+  .formRow { flex-direction: column; align-items: stretch; }
+  .formRow button { width: 100%; }
 }

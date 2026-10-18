@@ -64,6 +64,7 @@ The image is built and pushed by `.github/workflows/docker-publish.yml`.
 - Desktop: categories laid out in multiple columns (auto-fitting grid).
 - Mobile: single column, filter/scroll via the category dropdown in the header.
 - Categories can be created (+) and deleted (−) via the header controls.
+- Bookmarks can be added on the site itself via the "+ Bookmark" button (category, title, URL, optional description) — useful on mobile, where no extension is available.
 - Descriptions show on hover (desktop) or via the ⓘ button next to each entry.
 
 ## Browser extension

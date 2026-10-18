@@ -9,12 +9,40 @@
 <body>
 <header>
   <h1>Bookmarks</h1>
-  <select id="categoryFilter" aria-label="Filter by category"></select>
-  <span class="catActions">
-    <button id="addCategory" title="Add category">+</button>
-    <button id="delCategory" title="Delete selected category">−</button>
+  <span class="headerActions">
+    <select id="categoryFilter" aria-label="Filter by category"></select>
+    <span class="catActions">
+      <button id="addCategory" title="Add category">+</button>
+      <button id="delCategory" title="Delete selected category">−</button>
+    </span>
+    <button id="addBookmarkBtn" title="Add bookmark">+ Bookmark</button>
   </span>
 </header>
+<form id="addBookmarkForm" hidden>
+  <div class="formRow">
+    <label>Category
+      <select id="bmCategory"></select>
+    </label>
+    <label>Title
+      <input id="bmTitle" maxlength="500" required>
+    </label>
+  </div>
+  <div class="formRow">
+    <label>URL
+      <input id="bmUrl" type="url" maxlength="2000" placeholder="https://…" required>
+    </label>
+  </div>
+  <div class="formRow">
+    <label>Description (optional)
+      <input id="bmDesc" maxlength="2000">
+    </label>
+  </div>
+  <div class="formRow">
+    <button type="submit" id="bmSave">Save</button>
+    <button type="button" id="bmCancel">Cancel</button>
+    <span id="bmStatus" class="err"></span>
+  </div>
+</form>
 <main id="columns"></main>
 <p id="empty" hidden>No bookmarks yet.</p>
 <script src="/app.js"></script>
