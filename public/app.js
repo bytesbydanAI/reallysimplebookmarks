@@ -4,12 +4,17 @@ const filter = $('#categoryFilter');
 const emptyMsg = $('#empty');
 
 async function api(path, opts) {
+  const { data } = await apiRaw(path, opts);
+  return data;
+}
+
+async function apiRaw(path, opts) {
   const res = await fetch(path, {
     headers: { 'Content-Type': 'application/json' },
     ...opts,
   });
   if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.status);
-  return res.json();
+  return { status: res.status, data: await res.json() };
 }
 
 function esc(s) {
@@ -278,10 +283,13 @@ $('#addCategory').addEventListener('click', async () => {
   const name = prompt('New category name:');
   if (!name || !name.trim()) return;
   try {
-    await api('/api/categories', { method: 'POST', body: JSON.stringify({ name: name.trim() }) });
+    const { status, data } = await apiRaw('/api/categories', { method: 'POST', body: JSON.stringify({ name: name.trim() }) });
     await render();
-    filter.value = name.trim();
+    filter.value = data.name;
     filter.dispatchEvent(new Event('change'));
+    if (status === 200) {
+      alert(`A category '${data.name}' already exists — selected it instead.`);
+    }
   } catch (e) {
     alert('Error: ' + e.message);
   }
