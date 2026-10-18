@@ -1,9 +1,9 @@
 services:
   bookmarks:
-    build: .
+    image: ghcr.io/bytesbydanai/reallysimplebookmarks:latest
     container_name: reallysimplebookmarks
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "26482:3000"
     volumes:
       - ./data:/data
