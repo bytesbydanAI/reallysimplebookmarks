@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  body { font: 14px/1.4 system-ui, sans-serif; width: 300px; margin: 8px; }
+  label { display: block; margin: 8px 0 2px; font-size: 12px; color: #555; }
+  select, input, textarea {
+    font: inherit; width: 100%; padding: 3px 4px;
+    border: 1px solid #bbb; box-sizing: border-box;
+  }
+  textarea { resize: vertical; }
+  #save { margin-top: 10px; padding: 4px 12px; width: auto; }
+  #status { margin-top: 6px; font-size: 12px; color: #080; }
+  #status.err { color: #c00; }
+</style>
+</head>
+<body>
+<label for="server">Server URL</label>
+<input id="server" type="url" placeholder="https://bookmarks.example.com">
+
+<label for="category">Category</label>
+<select id="category"></select>
+<input id="newCategory" placeholder="New category name" hidden>
+
+<label for="title">Title</label>
+<input id="title" maxlength="500">
+
+<label for="desc">Description (optional)</label>
+<textarea id="desc" rows="2" maxlength="2000"></textarea>
+
+<button id="save">Save</button>
+<span id="status"></span>
+<script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+services:
+  bookmarks:
+    build: .
+    container_name: reallysimplebookmarks
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data

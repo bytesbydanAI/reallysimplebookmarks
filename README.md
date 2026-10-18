@@ -1,0 +1,76 @@
+# Really Simple Bookmarks
+
+A minimal self-hosted bookmark manager: a small Node.js backend with JSON file
+storage, a responsive web UI, and a cross-browser (Chrome/Chromium + Firefox)
+extension for saving the current page.
+
+No accounts, no framework, no database — designed to sit behind a reverse
+proxy (e.g. Pangolin handles auth in front of it).
+
+## Backend (Docker)
+
+```bash
+docker compose up -d --build
+```
+
+- Web UI: `http://localhost:3000`
+- Data is stored in `./data/bookmarks.json` (mount a volume in production).
+- No login: authentication is expected to be handled by your reverse proxy
+  (e.g. Pangolin).
+
+## API
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/categories` | List categories |
+| POST | `/api/categories` | Create category `{ name }` |
+| GET | `/api/bookmarks` | List bookmarks |
+| POST | `/api/bookmarks` | Create bookmark `{ title, url, category, description? }` |
+| DELETE | `/api/bookmarks/:id` | Delete a bookmark |
+
+## Website
+
+- Desktop: categories laid out in multiple columns (auto-fitting grid).
+- Mobile: single column, filter/scroll via the category dropdown in the header.
+- Descriptions show on hover (desktop) or via the ⓘ button next to each entry.
+
+## Browser extension
+
+The `extension/` folder is a WebExtension (MV3) that works in both
+Chromium-based browsers and Firefox.
+
+1. Open the extension popup, enter your server URL (e.g.
+   `https://bookmarks.example.com`) — it is remembered.
+2. Choose a category from the dropdown, or pick "+ Add new category…" to
+   create one.
+3. The title field is pre-filled with the page title and fully editable.
+4. Optionally add a description, then Save.
+
+### Install (Chromium)
+
+1. Visit `chrome://extensions`, enable Developer mode.
+2. "Load unpacked" and select the `extension/` folder.
+
+### Install (Firefox)
+
+1. Visit `about:debugging#/runtime/this-firefox`.
+2. "Load Temporary Add-on" and select the `extension/manifest.json` file
+   (or zip the `extension/` folder and sign it via
+   [addons.mozilla.org](https://addons.mozilla.org) for permanent install).
+
+### Reverse proxy / CORS note
+
+The extension calls your server directly from the popup, so it needs CORS
+enabled for extension origins. The server allows all origins
+(`Access-Control-Allow-Origin: *`), which is safe since the extension only
+makes requests with a JSON content type (no cookies).
+
+## Project layout
+
+```
+server.js             # zero-dependency Node HTTP server + JSON API
+public/               # web UI (index.html, style.css, app.js)
+extension/            # browser extension (manifest.json, popup.html/js, icons)
+Dockerfile            # runs server.js on port 3000 with /data volume
+docker-compose.yml    # example compose stack
+```

@@ -1,0 +1,124 @@
+const api = typeof browser !== 'undefined' ? browser : chrome;
+
+const $ = (id) => document.getElementById(id);
+const serverEl = $('server');
+const categoryEl = $('category');
+const newCategoryEl = $('newCategory');
+const titleEl = $('title');
+const descEl = $('desc');
+const statusEl = $('status');
+const saveBtn = $('save');
+
+function setStatus(msg, err) {
+  statusEl.textContent = msg;
+  statusEl.className = err ? 'err' : '';
+}
+
+async function getServerUrl() {
+  const { serverUrl } = await api.storage.local.get('serverUrl');
+  return serverUrl || '';
+}
+
+async function loadCategories() {
+  const base = serverEl.value.replace(/\/+$/, '');
+  if (!base) return [];
+  const res = await fetch(base + '/api/categories');
+  if (!res.ok) throw new Error('categories: ' + res.status);
+  return res.json();
+}
+
+function fillCategories(cats) {
+  categoryEl.replaceChildren();
+  for (const c of cats) {
+    const o = document.createElement('option');
+    o.value = c.name;
+    o.textContent = c.name;
+    categoryEl.appendChild(o);
+  }
+  const addNew = document.createElement('option');
+  addNew.value = '__new__';
+  addNew.textContent = '+ Add new category…';
+  categoryEl.appendChild(addNew);
+}
+
+async function init() {
+  serverEl.value = await getServerUrl();
+
+  const [tab] = await api.tabs.query({ active: true, currentWindow: true });
+  if (tab) {
+    titleEl.value = tab.title || tab.url;
+    titleEl.dataset.url = tab.url || '';
+    titleEl.dataset.suggestion = tab.title || tab.url;
+  }
+
+  try {
+    fillCategories(await loadCategories());
+  } catch (e) {
+    setStatus('Could not load categories. Is the server URL set and reachable?', true);
+  }
+}
+
+serverEl.addEventListener('change', async () => {
+  await api.storage.local.set({ serverUrl: serverEl.value.trim() });
+  try {
+    fillCategories(await loadCategories());
+    setStatus('');
+  } catch (e) {
+    setStatus('Could not load categories from that URL.', true);
+  }
+});
+
+categoryEl.addEventListener('change', () => {
+  newCategoryEl.hidden = categoryEl.value !== '__new__';
+  if (!newCategoryEl.hidden) newCategoryEl.focus();
+});
+
+saveBtn.addEventListener('click', async () => {
+  const base = serverEl.value.replace(/\/+$/, '');
+  const title = titleEl.value.trim();
+  const url = titleEl.dataset.url;
+  const description = descEl.value.trim();
+  let category = categoryEl.value;
+
+  if (!base) return setStatus('Server URL required.', true);
+  if (!title) return setStatus('Title required.', true);
+  if (!url || !/^https?:\/\//.test(url)) return setStatus('No bookmarkable page URL.', true);
+  if (category === '__new__') {
+    const name = newCategoryEl.value.trim();
+    if (!name) return setStatus('New category name required.', true);
+    category = name;
+  } else if (!category) {
+    return setStatus('Select a category.', true);
+  }
+
+  saveBtn.disabled = true;
+  try {
+    let catRes = await fetch(base + '/api/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: category }),
+    });
+    if (!catRes.ok) {
+      const e = await catRes.json().catch(() => ({}));
+      throw new Error(e.error || catRes.status);
+    }
+
+    const res = await fetch(base + '/api/bookmarks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, url, category, description }),
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.error || res.status);
+    }
+    setStatus('Saved.');
+    window.close();
+  } catch (e) {
+    setStatus('Error: ' + e.message, true);
+  } finally {
+    saveBtn.disabled = false;
+  }
+});
+
+init();
