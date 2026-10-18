@@ -57,7 +57,7 @@ The image is built and pushed by `.github/workflows/docker-publish.yml`.
 | GET | `/api/categories` | List categories (Home always first) |
 | POST | `/api/categories` | Create category `{ name }` |
 | POST | `/api/categories/:id/position` | Move category to `{ position }` (1..n; Home stays at 0) |
-| POST | `/api/bookmarks/:id/position` | Move bookmark to `{ position }` within its category (0-based) |
+| POST | `/api/bookmarks/:id/position` | Move bookmark to `{ position }` within its category (0-based API; the UI displays 1-based) |
 | PATCH | `/api/categories/:id` | Rename category `{ name }` — moves its bookmarks; not for Home |
 | DELETE | `/api/categories/:id` | Delete category; add `?force=1` to delete its bookmarks too; Home protected |
 | GET | `/api/bookmarks` | List bookmarks |

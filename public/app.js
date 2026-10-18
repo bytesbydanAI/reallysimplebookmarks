@@ -99,12 +99,12 @@ function bookmarkRow(b, reordering, rank) {
     const pos = document.createElement('span');
     pos.className = 'catPos';
     pos.dataset.clickable = '1';
-    pos.textContent = `(${rank})`;
+    pos.textContent = `(${rank + 1})`;
     pos.title = 'Click to change position';
     pos.onclick = async () => {
-      const input = prompt(`Move bookmark to position (0–${reorderTotal - 1}):`, rank);
+      const input = prompt(`Move bookmark to position (1–${reorderTotal}):`, rank + 1);
       if (input === null) return;
-      const p = parseInt(input, 10);
+      const p = parseInt(input, 10) - 1;
       if (isNaN(p) || p === rank) return;
       try {
         await api('/api/bookmarks/' + b.id + '/position', { method: 'POST', body: JSON.stringify({ position: p }) });
