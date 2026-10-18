@@ -5,6 +5,7 @@ const serverEl = $('server');
 const categoryEl = $('category');
 const newCategoryEl = $('newCategory');
 const titleEl = $('title');
+const urlEl = $('url');
 const descEl = $('desc');
 const statusEl = $('status');
 const saveBtn = $('save');
@@ -70,16 +71,25 @@ function fillCategories(cats) {
 }
 
 async function init() {
-  serverEl.value = await getServerUrl();
-  if (!serverEl.value) {
-    setStatus('Set your server first — click ⚙ below.', true);
-    settingsBox.classList.add('open');
+  try {
+    const serverUrl = await getServerUrl();
+    serverEl.value = serverUrl;
+    if (!serverUrl) {
+      setStatus('Set your server first — click ⚙ below.', true);
+      settingsBox.classList.add('open');
+    }
+  } catch (e) {
+    setStatus('Could not read settings: ' + e.message, true);
   }
 
-  const [tab] = await api.tabs.query({ active: true, currentWindow: true });
-  if (tab) {
-    titleEl.value = tab.title || tab.url;
-    titleEl.dataset.url = tab.url || '';
+  try {
+    const [tab] = await api.tabs.query({ active: true, currentWindow: true });
+    if (tab) {
+      titleEl.value = tab.title || tab.url || '';
+      urlEl.value = tab.url || '';
+    }
+  } catch (e) {
+    setStatus('Could not read current tab: ' + e.message, true);
   }
 
   try {
@@ -149,13 +159,13 @@ categoryEl.addEventListener('change', () => {
 saveBtn.addEventListener('click', async () => {
   const base = normalizeBase();
   const title = titleEl.value.trim();
-  const url = titleEl.dataset.url;
+  const url = urlEl.value.trim();
   const description = descEl.value.trim();
   let category = categoryEl.value;
 
   if (!base) return setStatus('Set your server first (⚙ Settings).', true);
   if (!title) return setStatus('Title required.', true);
-  if (!url || !/^https?:\/\//.test(url)) return setStatus('No bookmarkable page URL.', true);
+  if (!url || !/^https?:\/\//.test(url)) return setStatus('A valid http(s) URL is required.', true);
   if (category === '__new__') {
     const name = newCategoryEl.value.trim();
     if (!name) return setStatus('New category name required.', true);
