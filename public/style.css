@@ -144,4 +144,5 @@ li.editing .editForm button[type="submit"] { align-self: flex-start; }
   header { flex-wrap: wrap; }
   .formRow { flex-direction: column; align-items: stretch; }
   .formRow button { width: 100%; }
+  #importBtn, #exportBtn, #importFile { display: none; }
 }
