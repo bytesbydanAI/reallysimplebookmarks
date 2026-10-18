@@ -9,14 +9,44 @@ proxy (e.g. Pangolin handles auth in front of it).
 
 ## Backend (Docker)
 
-```bash
-docker compose up -d --build
+### Option A: Pull the prebuilt image (recommended, e.g. for Dockge)
+
+A prebuilt image is published to GHCR on every push to `main`, so no local
+build step is needed. Just drop [`docker-compose.yml`](./docker-compose.yml)
+into Dockge (or run `docker compose up -d`) and the container is pulled
+automatically:
+
+```yaml
+services:
+  bookmarks:
+    image: ghcr.io/bytesbydanai/reallysimplebookmarks:latest
+    container_name: reallysimplebookmarks
+    restart: unless-stopped
+    ports:
+      - "26482:3000"
+    volumes:
+      - ./data:/data
 ```
 
-- Web UI: `http://localhost:3000`
-- Data is stored in `./data/bookmarks.json` (mount a volume in production).
+- Web UI: `http://localhost:26482`
+- Data is stored in `./data/bookmarks.json` on the host.
 - No login: authentication is expected to be handled by your reverse proxy
   (e.g. Pangolin).
+
+### Option B: Build locally
+
+```bash
+docker build -t reallysimplebookmarks .
+docker run -d -p 26482:3000 -v ./data:/data reallysimplebookmarks
+```
+
+or with compose:
+
+```bash
+docker compose up -d --build   # first move the `image:` line back to `build: .`
+```
+
+The image is built and pushed by `.github/workflows/docker-publish.yml`.
 
 ## API
 
