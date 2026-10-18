@@ -174,12 +174,16 @@ route('POST', /^\/api\/categories\/([a-z0-9]+)\/position$/, async (req, res, id)
   if (i === -1) return send(res, 404, { error: 'not found' });
   if (store.categories[i].name === 'Home') return send(res, 400, { error: 'Home stays first' });
   const body = await readBody(req);
-  const pos = Number(body.position);
-  if (!Number.isInteger(pos) || pos < 1 || pos >= store.categories.length) {
-    return send(res, 400, { error: 'invalid position' });
+  let targetIdx;
+  if (body.before === null) {
+    targetIdx = store.categories.length - 1;
+  } else {
+    const target = store.categories.findIndex((c) => c.id === body.before);
+    if (target === -1 || target === 0) return send(res, 400, { error: 'invalid target' });
+    targetIdx = target > i ? target - 1 : target;
   }
   const [cat] = store.categories.splice(i, 1);
-  store.categories.splice(pos, 0, cat);
+  store.categories.splice(targetIdx, 0, cat);
   persist();
   send(res, 200, { ok: true });
 });

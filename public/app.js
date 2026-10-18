@@ -177,6 +177,7 @@ function bookmarkRow(b, reordering) {
   return li;
 }
 
+let columnOrder = [];
 function fillColumn(cat, bookmarks, position, total) {
   const div = document.createElement('div');
   div.className = 'category';
@@ -188,15 +189,23 @@ function fillColumn(cat, bookmarks, position, total) {
     pos.dataset.clickable = '1';
     pos.title = 'Click to change category position';
     pos.onclick = async () => {
-      const input = prompt(`Move category "${cat.name}" to position (1–${total - 1}):`, position);
+      const input = prompt(`Move category "${cat.name}" to position (0–${total - 1}):`, position);
       if (input === null) return;
       const p = parseInt(input, 10);
       if (isNaN(p) || p === position) return;
+      let before;
+      if (p <= 0) {
+        before = columnOrder[1] && columnOrder[1].id ? columnOrder[1].id : null;
+      } else if (p >= total - 1) {
+        before = null;
+      } else {
+        before = columnOrder[p + 1] && columnOrder[p + 1].id ? columnOrder[p + 1].id : columnOrder[p].id;
+      }
       try {
-        await api('/api/categories/' + cat.id + '/position', { method: 'POST', body: JSON.stringify({ position: p }) });
+        await api('/api/categories/' + cat.id + '/position', { method: 'POST', body: JSON.stringify({ before }) });
         render();
       } catch (e) {
-        alert(e.message === 'invalid position' ? `Enter a number between 1 and ${total - 1}.` : 'Error: ' + e.message);
+        alert('Error: ' + e.message);
       }
     };
   }
@@ -263,6 +272,7 @@ async function render() {
     if (!order.some((c) => c.name === name)) order.push({ id: '', name });
   }
 
+  columnOrder = order;
   order.forEach((cat, idx) => {
     columns.appendChild(fillColumn(cat, byCat.get(cat.name), idx, order.length));
   });
