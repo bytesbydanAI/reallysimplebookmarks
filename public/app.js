@@ -279,6 +279,11 @@ async function render() {
   });
 }
 
+$('#homeLink').addEventListener('click', () => {
+  filter.value = '';
+  filter.dispatchEvent(new Event('change'));
+});
+
 $('#addCategory').addEventListener('click', async () => {
   const name = prompt('New category name:');
   if (!name || !name.trim()) return;
