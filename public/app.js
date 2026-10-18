@@ -177,12 +177,32 @@ function bookmarkRow(b, reordering) {
   return li;
 }
 
-function fillColumn(cat, bookmarks) {
+function fillColumn(cat, bookmarks, position, total) {
   const div = document.createElement('div');
   div.className = 'category';
   const heading = document.createElement('h2');
+  const pos = document.createElement('span');
+  pos.className = 'catPos';
+  pos.textContent = `(${position})`;
+  if (cat.id) {
+    pos.dataset.clickable = '1';
+    pos.title = 'Click to change category position';
+    pos.onclick = async () => {
+      const input = prompt(`Move category "${cat.name}" to position (1–${total - 1}):`, position);
+      if (input === null) return;
+      const p = parseInt(input, 10);
+      if (isNaN(p) || p === position) return;
+      try {
+        await api('/api/categories/' + cat.id + '/position', { method: 'POST', body: JSON.stringify({ position: p }) });
+        render();
+      } catch (e) {
+        alert(e.message === 'invalid position' ? `Enter a number between 1 and ${total - 1}.` : 'Error: ' + e.message);
+      }
+    };
+  }
+  heading.appendChild(pos);
   const span = document.createElement('span');
-  span.textContent = `${cat.name} (${bookmarks.length})`;
+  span.textContent = cat.name;
   heading.appendChild(span);
   const spacer = document.createElement('span');
   spacer.style.flex = '1';
@@ -198,24 +218,6 @@ function fillColumn(cat, bookmarks) {
   };
   if (reordering) re.classList.add('active');
   heading.appendChild(re);
-  if (cat.name !== 'Home') {
-    const up = document.createElement('button');
-    up.className = 'reorderBtn';
-    up.textContent = '↑';
-    up.title = 'Move category up';
-    up.onclick = async () => {
-      try { await api('/api/categories/' + cat.id + '/up', { method: 'POST' }); render(); } catch (e) { alert('Error: ' + e.message); }
-    };
-    heading.appendChild(up);
-    const down = document.createElement('button');
-    down.className = 'reorderBtn';
-    down.textContent = '↓';
-    down.title = 'Move category down';
-    down.onclick = async () => {
-      try { await api('/api/categories/' + cat.id + '/down', { method: 'POST' }); render(); } catch (e) { alert('Error: ' + e.message); }
-    };
-    heading.appendChild(down);
-  }
   div.appendChild(heading);
   const ul = document.createElement('ul');
   for (const b of bookmarks) ul.appendChild(bookmarkRow(b, reordering));
@@ -261,9 +263,9 @@ async function render() {
     if (!order.some((c) => c.name === name)) order.push({ id: '', name });
   }
 
-  for (const cat of order) {
-    columns.appendChild(fillColumn(cat, byCat.get(cat.name)));
-  }
+  order.forEach((cat, idx) => {
+    columns.appendChild(fillColumn(cat, byCat.get(cat.name), idx, order.length));
+  });
 }
 
 $('#addCategory').addEventListener('click', async () => {

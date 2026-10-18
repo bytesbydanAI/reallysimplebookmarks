@@ -169,15 +169,17 @@ route('POST', /^\/api\/categories$/, async (req, res) => {
   send(res, 201, cat);
 });
 
-route('POST', /^\/api\/categories\/([a-z0-9]+)\/(up|down)$/, (req, res, id, dir) => {
+route('POST', /^\/api\/categories\/([a-z0-9]+)\/position$/, async (req, res, id) => {
   const i = store.categories.findIndex((c) => c.id === id);
   if (i === -1) return send(res, 404, { error: 'not found' });
-  const homeIdx = store.categories.findIndex((c) => c.name === 'Home');
-  const j = dir === 'up' ? i - 1 : i + 1;
-  if (j < 0 || j >= store.categories.length) return send(res, 200, { ok: true });
-  if (j === homeIdx || i === homeIdx) return send(res, 400, { error: 'Home stays first' });
+  if (store.categories[i].name === 'Home') return send(res, 400, { error: 'Home stays first' });
+  const body = await readBody(req);
+  const pos = Number(body.position);
+  if (!Number.isInteger(pos) || pos < 1 || pos >= store.categories.length) {
+    return send(res, 400, { error: 'invalid position' });
+  }
   const [cat] = store.categories.splice(i, 1);
-  store.categories.splice(j, 0, cat);
+  store.categories.splice(pos, 0, cat);
   persist();
   send(res, 200, { ok: true });
 });

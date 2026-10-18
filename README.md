@@ -56,7 +56,7 @@ The image is built and pushed by `.github/workflows/docker-publish.yml`.
 | POST | `/api/import` | Import bookmarks.html `{ html }` — dedupes by URL |
 | GET | `/api/categories` | List categories (Home always first) |
 | POST | `/api/categories` | Create category `{ name }` |
-| POST | `/api/categories/:id/up` \| `/down` | Move category up/down in the order (Home pinned first) |
+| POST | `/api/categories/:id/position` | Move category to `{ position }` (0 = Home; 1..n for the rest) |
 | POST | `/api/bookmarks/:id/up` \| `/down` | Move bookmark up/down within its category |
 | PATCH | `/api/categories/:id` | Rename category `{ name }` — moves its bookmarks; not for Home |
 | DELETE | `/api/categories/:id` | Delete category; add `?force=1` to delete its bookmarks too; Home protected |
@@ -70,7 +70,7 @@ The image is built and pushed by `.github/workflows/docker-publish.yml`.
 - Desktop: categories laid out in multiple columns (auto-fitting grid).
 - Mobile: single column, filter/scroll via the category dropdown in the header.
 - Categories can be created (+), renamed (✎), and deleted (−) via the header controls. Deleting shows the entry count and confirmation; ⚠ deletion also removes the category's bookmarks.
-- Category order can be changed with the ↑/↓ buttons on each column heading (Home is always first). Bookmark order: click ⇅ on a column heading to enter reorder mode (rows become inert and show ↑/↓ per entry), click ⇅ again to exit. A legacy "Default" category is automatically renamed to Home on first start.
+- Each column heading shows its position as (0), (1), … — click the number and enter a new position to reorder; others shift automatically. Home is always (0). Bookmark order: click ⇅ on a column heading to enter reorder mode (rows become inert and show ↑/↓ per entry), click ⇅ again to exit. A legacy "Default" category is automatically renamed to Home on first start.
 - Each entry has a ✎ button to edit its title, URL, and description, and a → button to move it to another category.
 - Bookmarks can be added on the site itself via the "+ Bookmark" button (category, title, URL, optional description) — useful on mobile, where no extension is available.
 - **Import/Export**: the header has Import/Export buttons for the standard browser bookmarks.html format (Netscape). On import, ungrouped toolbar bookmarks go to the **Home** category (always listed first); toolbar sub-folders and other folders become categories. Export reverses the mapping: Home → toolbar, categories → folders.
