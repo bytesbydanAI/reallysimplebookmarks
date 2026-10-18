@@ -178,6 +178,7 @@ function bookmarkRow(b, reordering) {
 }
 
 let columnOrder = [];
+let fullCategoryList = [];
 function fillColumn(cat, bookmarks, position, total) {
   const div = document.createElement('div');
   div.className = 'category';
@@ -189,16 +190,20 @@ function fillColumn(cat, bookmarks, position, total) {
     pos.dataset.clickable = '1';
     pos.title = 'Click to change category position';
     pos.onclick = async () => {
-      const input = prompt(`Move category "${cat.name}" to position (1–${total - 1}):`, position);
+      const list = fullCategoryList;
+      const input = prompt(`Move category "${cat.name}" to position (1–${list.length - 1}):`, list.findIndex((c) => c.id === cat.id));
       if (input === null) return;
       const p = parseInt(input, 10);
-      if (isNaN(p) || p === position) return;
+      if (isNaN(p)) return;
+      const cur = list.findIndex((c) => c.id === cat.id);
+      if (p === cur) return;
       let before;
-      if (p < position) {
-        before = columnOrder[Math.max(p, 1)] && columnOrder[Math.max(p, 1)].id ? columnOrder[Math.max(p, 1)].id : null;
+      if (p <= 0) {
+        before = list[1] ? list[1].id : null;
+      } else if (p >= list.length - 1) {
+        before = null;
       } else {
-        const after = p + 1 < total ? columnOrder[p + 1] : null;
-        before = after && after.id ? after.id : null;
+        before = list[p + 1] ? list[p + 1].id : null;
       }
       try {
         await api('/api/categories/' + cat.id + '/position', { method: 'POST', body: JSON.stringify({ before }) });
@@ -266,6 +271,7 @@ async function render() {
     if (!byCat.has(b.category)) byCat.set(b.category, []);
     byCat.get(b.category).push(b);
   }
+  fullCategoryList = cats;
   const order = cats.filter((c) => byCat.has(c.name)).map((c) => c);
   for (const name of byCat.keys()) {
     if (!order.some((c) => c.name === name)) order.push({ id: '', name });
@@ -273,7 +279,8 @@ async function render() {
 
   columnOrder = order;
   order.forEach((cat, idx) => {
-    columns.appendChild(fillColumn(cat, byCat.get(cat.name), idx, order.length));
+    const fullPos = fullCategoryList.findIndex((c) => c.id === cat.id);
+    columns.appendChild(fillColumn(cat, byCat.get(cat.name), fullPos, fullCategoryList.length));
   });
 }
 
