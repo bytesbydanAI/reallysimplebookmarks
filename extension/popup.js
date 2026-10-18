@@ -195,8 +195,8 @@ saveBtn.addEventListener('click', async () => {
       const e = await res.json().catch(() => ({}));
       throw new Error(e.error || res.status);
     }
-    setStatus('Saved.');
-    window.close();
+    setStatus('Saved ✓');
+    setTimeout(() => window.close(), 800);
   } catch (e) {
     setStatus('Error: ' + e.message, true);
   } finally {
