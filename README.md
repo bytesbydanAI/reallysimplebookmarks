@@ -56,7 +56,7 @@ The image is built and pushed by `.github/workflows/docker-publish.yml`.
 | POST | `/api/import` | Import bookmarks.html `{ html }` — dedupes by URL |
 | GET | `/api/categories` | List categories (Home always first) |
 | POST | `/api/categories` | Create category `{ name }` |
-| POST | `/api/categories/:id/position` | Move category `{ before: <categoryId \| null> }` — inserts before the given category, or at the end for null |
+| POST | `/api/categories/:id/position` | Move category to `{ position }` (1..n; Home stays at 0) |
 | POST | `/api/bookmarks/:id/up` \| `/down` | Move bookmark up/down within its category |
 | PATCH | `/api/categories/:id` | Rename category `{ name }` — moves its bookmarks; not for Home |
 | DELETE | `/api/categories/:id` | Delete category; add `?force=1` to delete its bookmarks too; Home protected |

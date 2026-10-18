@@ -191,25 +191,16 @@ function fillColumn(cat, bookmarks, position, total) {
     pos.title = 'Click to change category position';
     pos.onclick = async () => {
       const list = fullCategoryList;
-      const input = prompt(`Move category "${cat.name}" to position (1–${list.length - 1}):`, list.findIndex((c) => c.id === cat.id));
+      const cur = list.findIndex((c) => c.id === cat.id);
+      const input = prompt(`Move category "${cat.name}" to position (1–${list.length - 1}):`, cur);
       if (input === null) return;
       const p = parseInt(input, 10);
-      if (isNaN(p)) return;
-      const cur = list.findIndex((c) => c.id === cat.id);
-      if (p === cur) return;
-      let before;
-      if (p <= 0) {
-        before = list[1] ? list[1].id : null;
-      } else if (p >= list.length - 1) {
-        before = null;
-      } else {
-        before = list[p + 1] ? list[p + 1].id : null;
-      }
+      if (isNaN(p) || p === cur) return;
       try {
-        await api('/api/categories/' + cat.id + '/position', { method: 'POST', body: JSON.stringify({ before }) });
+        await api('/api/categories/' + cat.id + '/position', { method: 'POST', body: JSON.stringify({ position: p }) });
         render();
       } catch (e) {
-        alert('Error: ' + e.message);
+        alert(e.message === 'invalid position' ? `Enter a number between 1 and ${list.length - 1}.` : 'Error: ' + e.message);
       }
     };
   }
