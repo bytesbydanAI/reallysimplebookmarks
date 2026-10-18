@@ -54,6 +54,7 @@ The image is built and pushed by `.github/workflows/docker-publish.yml`.
 |---|---|---|
 | GET | `/api/categories` | List categories |
 | POST | `/api/categories` | Create category `{ name }` |
+| DELETE | `/api/categories/:id` | Delete a category (only if empty) |
 | GET | `/api/bookmarks` | List bookmarks |
 | POST | `/api/bookmarks` | Create bookmark `{ title, url, category, description? }` |
 | DELETE | `/api/bookmarks/:id` | Delete a bookmark |
@@ -62,6 +63,7 @@ The image is built and pushed by `.github/workflows/docker-publish.yml`.
 
 - Desktop: categories laid out in multiple columns (auto-fitting grid).
 - Mobile: single column, filter/scroll via the category dropdown in the header.
+- Categories can be created (+) and deleted (−) via the header controls.
 - Descriptions show on hover (desktop) or via the ⓘ button next to each entry.
 
 ## Browser extension

@@ -54,7 +54,8 @@ async function init() {
   try {
     fillCategories(await loadCategories());
   } catch (e) {
-    setStatus('Could not load categories. Is the server URL set and reachable?', true);
+    fillCategories([]);
+    setStatus('Could not load categories — check the server URL. You can still type a new category below.', true);
   }
 }
 

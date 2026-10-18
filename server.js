@@ -91,6 +91,17 @@ route('POST', /^\/api\/categories$/, async (req, res) => {
   send(res, 201, cat);
 });
 
+route('DELETE', /^\/api\/categories\/([a-z0-9]+)$/, (req, res, id) => {
+  const cat = store.categories.find((c) => c.id === id);
+  if (!cat) return send(res, 404, { error: 'not found' });
+  if (store.bookmarks.some((b) => b.category === cat.name)) {
+    return send(res, 409, { error: 'category not empty' });
+  }
+  store.categories = store.categories.filter((c) => c.id !== id);
+  persist();
+  send(res, 200, { ok: true });
+});
+
 route('GET', /^\/api\/bookmarks$/, (req, res) => {
   send(res, 200, store.bookmarks);
 });

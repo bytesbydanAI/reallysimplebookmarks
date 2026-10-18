@@ -107,6 +107,35 @@ async function render() {
   }
 }
 
+$('#addCategory').addEventListener('click', async () => {
+  const name = prompt('New category name:');
+  if (!name || !name.trim()) return;
+  try {
+    await api('/api/categories', { method: 'POST', body: JSON.stringify({ name: name.trim() }) });
+    await render();
+    filter.value = name.trim();
+    filter.dispatchEvent(new Event('change'));
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+});
+
+$('#delCategory').addEventListener('click', async () => {
+  const name = filter.value;
+  if (!name) return alert('Select a category to delete first.');
+  if (!confirm(`Delete category "${name}"?`)) return;
+  const cats = await api('/api/categories');
+  const cat = cats.find((c) => c.name === name);
+  if (!cat) return;
+  try {
+    await api('/api/categories/' + cat.id, { method: 'DELETE' });
+    filter.value = '';
+    await render();
+  } catch (e) {
+    alert(e.message === 'category not empty' ? `"${name}" still has bookmarks. Delete or move them first.` : 'Error: ' + e.message);
+  }
+});
+
 filter.addEventListener('change', () => {
   if (filter.value) {
     for (const col of columns.children) {
