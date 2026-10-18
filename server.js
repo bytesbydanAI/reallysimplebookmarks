@@ -209,6 +209,11 @@ route('PATCH', /^\/api\/bookmarks\/([a-z0-9]+)$/, async (req, res, id) => {
     if (!title) return send(res, 400, { error: 'title required' });
     bm.title = title;
   }
+  if (body.url !== undefined) {
+    const url = cleanStr(body.url, 2000);
+    if (!/^https?:\/\//i.test(url)) return send(res, 400, { error: 'url must be http(s)' });
+    bm.url = url;
+  }
   if (body.description !== undefined) bm.description = cleanStr(body.description, 2000);
   persist();
   send(res, 200, bm);

@@ -19,6 +19,59 @@ function esc(s) {
 }
 
 const hoverInfo = $('#hoverInfo');
+function startEdit(li, b) {
+  const desc = li.querySelector('.desc');
+  const moveSel = li.querySelector('.moveSel');
+  if (moveSel && !moveSel.hidden) moveSel.hidden = true;
+  li.replaceChildren();
+  li.classList.add('editing');
+
+  const form = document.createElement('form');
+  form.className = 'editForm';
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await api('/api/bookmarks/' + b.id, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          title: form.querySelector('.et').value.trim(),
+          url: form.querySelector('.eu').value.trim(),
+          description: form.querySelector('.ed').value.trim(),
+        }),
+      });
+      render();
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  };
+
+  const mk = (cls, val, ph, type) => {
+    const inp = document.createElement('input');
+    inp.className = cls;
+    inp.value = val;
+    inp.placeholder = ph;
+    if (type) inp.type = type;
+    return inp;
+  };
+  form.appendChild(mk('et', b.title, 'Title'));
+  form.appendChild(mk('eu', b.url, 'https://…', 'url'));
+  form.appendChild(mk('ed', b.description || '', 'Description (optional)'));
+
+  const save = document.createElement('button');
+  save.type = 'submit';
+  save.textContent = 'Save';
+  form.appendChild(save);
+
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.textContent = 'Cancel';
+  cancel.onclick = () => render();
+  form.appendChild(cancel);
+
+  li.appendChild(form);
+  form.querySelector('.et').focus();
+}
+
 function fillMoveSelect(sel, current) {
   sel.replaceChildren();
   const allCats = [];
@@ -90,6 +143,13 @@ function bookmarkRow(b) {
     }
   };
   li.appendChild(moveSel);
+
+  const edit = document.createElement('button');
+  edit.className = 'info';
+  edit.textContent = '✎';
+  edit.title = 'Edit entry';
+  edit.onclick = () => startEdit(li, b);
+  li.appendChild(edit);
 
   const del = document.createElement('button');
   del.className = 'del';
