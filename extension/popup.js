@@ -47,9 +47,7 @@ async function loadCategories() {
     throw new Error('invalid server URL');
   }
   if (!(await hasOriginPermission(origin))) {
-    const err = new Error('permission missing');
-    err.needsPermission = origin;
-    throw err;
+    throw new Error('permission missing — use ⚙ Settings → Test connection to grant it');
   }
   const res = await fetch(base + '/api/categories');
   if (!res.ok) throw new Error('HTTP ' + res.status);

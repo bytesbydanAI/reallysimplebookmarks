@@ -177,9 +177,8 @@ function bookmarkRow(b, reordering) {
   return li;
 }
 
-let columnOrder = [];
 let fullCategoryList = [];
-function fillColumn(cat, bookmarks, position, total) {
+function fillColumn(cat, bookmarks, position) {
   const div = document.createElement('div');
   div.className = 'category';
   const heading = document.createElement('h2');
@@ -206,6 +205,7 @@ function fillColumn(cat, bookmarks, position, total) {
   }
   heading.appendChild(pos);
   const span = document.createElement('span');
+  span.className = 'catName';
   span.textContent = cat.name;
   heading.appendChild(span);
   const spacer = document.createElement('span');
@@ -268,10 +268,9 @@ async function render() {
     if (!order.some((c) => c.name === name)) order.push({ id: '', name });
   }
 
-  columnOrder = order;
   order.forEach((cat, idx) => {
     const fullPos = fullCategoryList.findIndex((c) => c.id === cat.id);
-    columns.appendChild(fillColumn(cat, byCat.get(cat.name), fullPos, fullCategoryList.length));
+    columns.appendChild(fillColumn(cat, byCat.get(cat.name), fullPos));
   });
 }
 
@@ -391,18 +390,19 @@ addForm.addEventListener('submit', async (e) => {
 });
 
 filter.addEventListener('change', () => {
-  if (filter.value) {
+  render().then(() => {
+    if (!filter.value) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     for (const col of columns.children) {
-      if (col.querySelector('h2').textContent.replace(/ \(\d+\)$/, '') === filter.value) {
-        const h = col.offsetTop;
-        window.scrollTo({ top: h, behavior: 'smooth' });
+      const name = col.querySelector('h2 .catName');
+      if (name && name.textContent === filter.value) {
+        window.scrollTo({ top: col.offsetTop, behavior: 'smooth' });
         break;
       }
     }
-  } else {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-  render();
+  });
 });
 
 render().catch((e) => console.error(e));

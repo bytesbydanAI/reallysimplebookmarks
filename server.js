@@ -82,6 +82,10 @@ function readBody(req) {
   });
 }
 
+function newId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
 function cleanStr(v, max) {
   return typeof v === 'string' ? v.trim().slice(0, max) : '';
 }
@@ -119,7 +123,7 @@ route('POST', /^\/api\/import$/, async (req, res) => {
   catNames.add('Home');
   for (const name of catNames) {
     if (!store.categories.find((c) => c.name === name)) {
-      store.categories.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name });
+      store.categories.push({ id: newId(), name });
     }
   }
 
@@ -130,7 +134,7 @@ route('POST', /^\/api\/import$/, async (req, res) => {
   const mk = (b, category) => {
     if (seen.has(b.url)) return;
     const bm = {
-      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      id: newId(),
       title: b.title.slice(0, 500),
       url: b.url.slice(0, 2000),
       category,
@@ -170,7 +174,7 @@ route('POST', /^\/api\/categories$/, async (req, res) => {
   if (!name) return send(res, 400, { error: 'name required' });
   const exists = store.categories.find((c) => c.name.toLowerCase() === name.toLowerCase());
   if (exists) return send(res, 200, exists);
-  const cat = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name };
+  const cat = { id: newId(), name };
   store.categories.push(cat);
   persist();
   send(res, 201, cat);
@@ -186,7 +190,7 @@ route('POST', /^\/api\/categories\/([a-z0-9]+)\/position$/, async (req, res, id)
     return send(res, 400, { error: 'invalid position' });
   }
   const [cat] = store.categories.splice(i, 1);
-  store.categories.splice(Math.min(pos, store.categories.length - 1), 0, cat);
+  store.categories.splice(pos, 0, cat);
   persist();
   send(res, 200, { ok: true });
 });
@@ -281,7 +285,7 @@ route('POST', /^\/api\/bookmarks$/, async (req, res) => {
     return send(res, 400, { error: 'unknown category' });
   }
   const bm = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    id: newId(),
     title,
     url,
     category,
@@ -316,7 +320,14 @@ const server = http.createServer(async (req, res) => {
   const pathname = decodeURIComponent(url.pathname);
 
   if (pathname.startsWith('/api/')) {
-    if (req.method === 'OPTIONS') return send(res, 204, {});
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      });
+      return res.end();
+    }
     for (const r of routes) {
       if (r.method !== req.method) continue;
       const m = pathname.match(r.pattern);
