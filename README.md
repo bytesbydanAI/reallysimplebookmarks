@@ -108,10 +108,24 @@ enabled for extension origins. The server allows all origins
 (`Access-Control-Allow-Origin: *`), which is safe since the extension only
 makes requests with a JSON content type (no cookies).
 
+## Tests
+
+```bash
+node test/test.js
+```
+
+36 integration tests covering: category and bookmark CRUD, case-insensitive
+duplicates, category positions (Home pinned first), bookmark positions,
+category moves with contiguous-block normalization, rename cascades, force
+delete, Default→Home migration, import/export round-trip with dedup, CORS
+preflight, and static file serving. Runs against a real server instance on a
+temp directory — no dependencies.
+
 ## Project layout
 
 ```
 server.js             # zero-dependency Node HTTP server + JSON API
+test/test.js          # integration test suite (node test/test.js)
 public/               # web UI (index.html, style.css, app.js)
 extension/            # browser extension (manifest.json, popup.html/js, icons)
 Dockerfile            # runs server.js on port 3000 with /data volume
