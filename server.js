@@ -21,6 +21,22 @@ function loadStore() {
 
 let store = loadStore();
 let saveTimer = null;
+function normalizeBookmarks() {
+  const order = store.categories.map((c) => c.name);
+  const byCat = new Map();
+  for (const b of store.bookmarks) {
+    if (!byCat.has(b.category)) byCat.set(b.category, []);
+    byCat.get(b.category).push(b);
+  }
+  const grouped = [];
+  for (const name of order) {
+    if (byCat.has(name)) grouped.push(...byCat.get(name));
+  }
+  for (const [name, bms] of byCat) {
+    if (!order.includes(name)) grouped.push(...bms);
+  }
+  store.bookmarks = grouped;
+}
 (function migrate() {
   const legacy = store.categories.find((c) => c.name === 'Default');
   if (legacy && !store.categories.some((c) => c.name === 'Home')) {
@@ -30,6 +46,10 @@ let saveTimer = null;
     }
     persist();
   }
+  const before = JSON.stringify(store.bookmarks.map((b) => b.id));
+  normalizeBookmarks();
+  const after = JSON.stringify(store.bookmarks.map((b) => b.id));
+  if (before !== after) persist();
 })();
 function persist() {
   normalizeHomeFirst();
@@ -238,7 +258,16 @@ route('PATCH', /^\/api\/bookmarks\/([a-z0-9]+)$/, async (req, res, id) => {
     if (!store.categories.find((c) => c.name.toLowerCase() === category.toLowerCase())) {
       return send(res, 400, { error: 'unknown category' });
     }
-    bm.category = category;
+    if (bm.category !== category) {
+      bm.category = category;
+      const i = store.bookmarks.findIndex((b) => b.id === id);
+      const [moved] = store.bookmarks.splice(i, 1);
+      let lastIdx = -1;
+      for (let k = store.bookmarks.length - 1; k >= 0; k--) {
+        if (store.bookmarks[k].category === category) { lastIdx = k; break; }
+      }
+      store.bookmarks.splice(lastIdx + 1, 0, moved);
+    }
   }
   if (body.title !== undefined) {
     const title = cleanStr(body.title, 500);
@@ -261,22 +290,16 @@ route('POST', /^\/api\/bookmarks\/([a-z0-9]+)\/position$/, async (req, res, id) 
   const bm = store.bookmarks[i];
   const body = await readBody(req);
   const pos = Number(body.position);
-  const count = store.bookmarks.filter((b) => b.category === bm.category).length;
+  let start = i;
+  while (start > 0 && store.bookmarks[start - 1].category === bm.category) start--;
+  let end = i;
+  while (end < store.bookmarks.length - 1 && store.bookmarks[end + 1].category === bm.category) end++;
+  const count = end - start + 1;
   if (!Number.isInteger(pos) || pos < 0 || pos > count - 1) {
     return send(res, 400, { error: 'invalid position' });
   }
   const [moved] = store.bookmarks.splice(i, 1);
-  const sibAfter = store.bookmarks.reduce((acc, b, idx) => {
-    if (b.category === bm.category) acc.push(idx);
-    return acc;
-  }, []);
-  let insertAt;
-  if (pos === sibAfter.length) {
-    insertAt = sibAfter[sibAfter.length - 1] + 1;
-  } else {
-    insertAt = sibAfter[pos];
-  }
-  store.bookmarks.splice(insertAt, 0, moved);
+  store.bookmarks.splice(start + pos, 0, moved);
   persist();
   send(res, 200, { ok: true });
 });
