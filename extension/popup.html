@@ -13,12 +13,22 @@
   #save { margin-top: 10px; padding: 4px 12px; width: auto; }
   #status { margin-top: 6px; font-size: 12px; color: #080; }
   #status.err { color: #c00; }
+  #settings { display: none; margin-top: 10px; padding-top: 8px; border-top: 1px solid #ddd; }
+  #settings.open { display: block; }
+  #settingsBtn {
+    border: none; background: none; padding: 2px 6px;
+    font: inherit; font-size: 13px; color: #666;
+    cursor: pointer; float: right; margin-top: 6px;
+  }
+  #settingsBtn:hover { color: #000; }
+  #settingsActions { display: flex; gap: 6px; margin-top: 8px; }
+  #settingsActions button { font: inherit; padding: 3px 10px; }
+  #testResult { margin-top: 6px; font-size: 12px; white-space: pre-wrap; }
+  #testResult.ok { color: #080; }
+  #testResult.err { color: #c00; }
 </style>
 </head>
 <body>
-<label for="server">Server URL</label>
-<input id="server" type="url" placeholder="https://bookmarks.example.com">
-
 <label for="category">Category</label>
 <select id="category"></select>
 <input id="newCategory" placeholder="New category name" hidden>
@@ -31,7 +41,18 @@
 
 <button id="save">Save</button>
 <span id="status"></span>
-<button id="grant" hidden>Grant access to server</button>
+<div style="clear: both;"></div>
+<button id="settingsBtn" title="Settings">⚙</button>
+
+<div id="settings">
+  <label for="server">Server URL</label>
+  <input id="server" type="url" placeholder="https://bookmarks.example.com">
+  <div id="settingsActions">
+    <button id="testConn">Test connection</button>
+    <button id="saveServer">Save server</button>
+  </div>
+  <div id="testResult"></div>
+</div>
 <script src="popup.js"></script>
 </body>
 </html>

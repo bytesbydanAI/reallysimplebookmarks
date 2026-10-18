@@ -8,7 +8,9 @@ const titleEl = $('title');
 const descEl = $('desc');
 const statusEl = $('status');
 const saveBtn = $('save');
-const grantBtn = $('grant');
+const settingsBtn = $('settingsBtn');
+const settingsBox = $('settings');
+const testResult = $('testResult');
 
 function setStatus(msg, err) {
   statusEl.textContent = msg;
@@ -30,9 +32,13 @@ async function requestOriginPermission(origin) {
   return api.permissions.request({ origins: [origin + '/*'] });
 }
 
+function normalizeBase() {
+  return serverEl.value.replace(/\/+$/, '');
+}
+
 async function loadCategories() {
-  const base = serverEl.value.replace(/\/+$/, '');
-  if (!base) return [];
+  const base = normalizeBase();
+  if (!base) throw new Error('no server URL set — open ⚙ Settings');
   let origin;
   try {
     origin = new URL(base).origin;
@@ -45,7 +51,7 @@ async function loadCategories() {
     throw err;
   }
   const res = await fetch(base + '/api/categories');
-  if (!res.ok) throw new Error('categories: ' + res.status);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
   return res.json();
 }
 
@@ -65,45 +71,73 @@ function fillCategories(cats) {
 
 async function init() {
   serverEl.value = await getServerUrl();
+  if (!serverEl.value) {
+    setStatus('Set your server first — click ⚙ below.', true);
+    settingsBox.classList.add('open');
+  }
 
   const [tab] = await api.tabs.query({ active: true, currentWindow: true });
   if (tab) {
     titleEl.value = tab.title || tab.url;
     titleEl.dataset.url = tab.url || '';
-    titleEl.dataset.suggestion = tab.title || tab.url;
   }
 
   try {
     fillCategories(await loadCategories());
   } catch (e) {
     fillCategories([]);
-    setStatus('Could not load categories (' + e.message + '). Click \'Grant access\' — if that does not help, check the server URL.', true);
-    grantBtn.hidden = false;
+    setStatus('Categories not loaded: ' + e.message, true);
   }
 }
 
-serverEl.addEventListener('change', async () => {
-  await api.storage.local.set({ serverUrl: serverEl.value.trim() });
-  grantBtn.hidden = true;
+settingsBtn.addEventListener('click', () => {
+  settingsBox.classList.toggle('open');
+});
+
+$('testConn').addEventListener('click', async () => {
+  testResult.textContent = 'Testing…';
+  const base = normalizeBase();
+  if (!base) {
+    testResult.textContent = 'Enter a server URL first.';
+    return;
+  }
+  let origin;
   try {
-    fillCategories(await loadCategories());
-    setStatus('');
+    origin = new URL(base).origin;
+  } catch {
+    testResult.textContent = 'Invalid URL. Include http:// or https://';
+    return;
+  }
+  if (!(await hasOriginPermission(origin))) {
+    testResult.textContent = 'Requesting permission…';
+    const granted = await requestOriginPermission(origin);
+    if (!granted) {
+      testResult.textContent = 'Permission denied — the extension cannot reach the server.';
+      return;
+    }
+  }
+  try {
+    const res = await fetch(base + '/api/categories');
+    if (!res.ok) {
+      testResult.textContent = 'Reached server, but it answered HTTP ' + res.status + '. Check the URL path.';
+      return;
+    }
+    const cats = await res.json();
+    testResult.textContent = 'OK — connected. ' + cats.length + ' category(ies) found.';
   } catch (e) {
-    setStatus('Could not load categories (' + e.message + '). Click \'Grant access\' — if that does not help, check the server URL.', true);
-    grantBtn.hidden = false;
+    testResult.textContent = 'Connection failed: ' + e.message;
   }
 });
 
-grantBtn.addEventListener('click', async () => {
+$('saveServer').addEventListener('click', async () => {
+  await api.storage.local.set({ serverUrl: serverEl.value.trim() });
   try {
-    const base = serverEl.value.replace(/\/+$/, '');
-    const origin = new URL(base).origin;
-    await requestOriginPermission(origin);
-    grantBtn.hidden = true;
     fillCategories(await loadCategories());
     setStatus('');
+    testResult.textContent = 'Saved. Categories loaded.';
   } catch (e) {
-    setStatus('Error: ' + e.message, true);
+    setStatus('Categories not loaded: ' + e.message, true);
+    testResult.textContent = 'Saved, but could not load categories: ' + e.message;
   }
 });
 
@@ -113,13 +147,13 @@ categoryEl.addEventListener('change', () => {
 });
 
 saveBtn.addEventListener('click', async () => {
-  const base = serverEl.value.replace(/\/+$/, '');
+  const base = normalizeBase();
   const title = titleEl.value.trim();
   const url = titleEl.dataset.url;
   const description = descEl.value.trim();
   let category = categoryEl.value;
 
-  if (!base) return setStatus('Server URL required.', true);
+  if (!base) return setStatus('Set your server first (⚙ Settings).', true);
   if (!title) return setStatus('Title required.', true);
   if (!url || !/^https?:\/\//.test(url)) return setStatus('No bookmarkable page URL.', true);
   if (category === '__new__') {
