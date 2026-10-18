@@ -185,21 +185,20 @@ function fillColumn(cat, bookmarks, position, total) {
   const pos = document.createElement('span');
   pos.className = 'catPos';
   pos.textContent = `(${position})`;
-  if (cat.id) {
+  if (cat.id && cat.name !== 'Home') {
     pos.dataset.clickable = '1';
     pos.title = 'Click to change category position';
     pos.onclick = async () => {
-      const input = prompt(`Move category "${cat.name}" to position (0–${total - 1}):`, position);
+      const input = prompt(`Move category "${cat.name}" to position (1–${total - 1}):`, position);
       if (input === null) return;
       const p = parseInt(input, 10);
       if (isNaN(p) || p === position) return;
       let before;
-      if (p <= 0) {
-        before = columnOrder[1] && columnOrder[1].id ? columnOrder[1].id : null;
-      } else if (p >= total - 1) {
-        before = null;
+      if (p < position) {
+        before = columnOrder[Math.max(p, 1)] && columnOrder[Math.max(p, 1)].id ? columnOrder[Math.max(p, 1)].id : null;
       } else {
-        before = columnOrder[p + 1] && columnOrder[p + 1].id ? columnOrder[p + 1].id : columnOrder[p].id;
+        const after = p + 1 < total ? columnOrder[p + 1] : null;
+        before = after && after.id ? after.id : null;
       }
       try {
         await api('/api/categories/' + cat.id + '/position', { method: 'POST', body: JSON.stringify({ before }) });
