@@ -20,7 +20,6 @@ function esc(s) {
 
 const hoverInfo = $('#hoverInfo');
 function startEdit(li, b) {
-  const desc = li.querySelector('.desc');
   const moveSel = li.querySelector('.moveSel');
   if (moveSel && !moveSel.hidden) moveSel.hidden = true;
   li.replaceChildren();
@@ -95,24 +94,12 @@ function bookmarkRow(b) {
   a.rel = 'noopener noreferrer';
   li.appendChild(a);
 
-  const info = document.createElement('button');
-  info.className = 'info';
-  info.textContent = 'i';
-  info.title = 'Info';
   li.addEventListener('mouseenter', () => {
     hoverInfo.textContent = b.description || b.title;
   });
-  if (b.description) {
-    info.onclick = () => li.querySelector('.desc').classList.toggle('open');
-  } else {
-    info.disabled = true;
-    info.style.opacity = '.25';
-    info.style.cursor = 'default';
-  }
-  li.appendChild(info);
 
   const move = document.createElement('button');
-  move.className = 'info';
+  move.className = 'rowBtn';
   move.textContent = '→';
   move.title = 'Move to another category';
   move.onclick = () => {
@@ -145,7 +132,7 @@ function bookmarkRow(b) {
   li.appendChild(moveSel);
 
   const edit = document.createElement('button');
-  edit.className = 'info';
+  edit.className = 'rowBtn';
   edit.textContent = '✎';
   edit.title = 'Edit entry';
   edit.onclick = () => startEdit(li, b);
@@ -161,11 +148,6 @@ function bookmarkRow(b) {
     render();
   };
   li.appendChild(del);
-
-  const desc = document.createElement('div');
-  desc.className = 'desc';
-  desc.textContent = b.description || '';
-  li.appendChild(desc);
 
   return li;
 }
