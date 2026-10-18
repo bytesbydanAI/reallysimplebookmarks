@@ -77,12 +77,8 @@ async function init() {
     fillCategories(await loadCategories());
   } catch (e) {
     fillCategories([]);
-    if (e.needsPermission) {
-      setStatus('The extension needs permission to access your server. Click Grant access.', true);
-      grantBtn.hidden = false;
-    } else {
-      setStatus('Could not load categories — check the server URL. You can still type a new category below.', true);
-    }
+    setStatus('Could not load categories (' + e.message + '). Click \'Grant access\' — if that does not help, check the server URL.', true);
+    grantBtn.hidden = false;
   }
 }
 
@@ -93,12 +89,8 @@ serverEl.addEventListener('change', async () => {
     fillCategories(await loadCategories());
     setStatus('');
   } catch (e) {
-    if (e.needsPermission) {
-      setStatus('The extension needs permission to access your server. Click Grant access.', true);
-      grantBtn.hidden = false;
-    } else {
-      setStatus('Could not load categories from that URL.', true);
-    }
+    setStatus('Could not load categories (' + e.message + '). Click \'Grant access\' — if that does not help, check the server URL.', true);
+    grantBtn.hidden = false;
   }
 });
 
@@ -106,11 +98,7 @@ grantBtn.addEventListener('click', async () => {
   try {
     const base = serverEl.value.replace(/\/+$/, '');
     const origin = new URL(base).origin;
-    const granted = await requestOriginPermission(origin);
-    if (!granted) {
-      setStatus('Permission denied. The extension cannot reach the server without it.', true);
-      return;
-    }
+    await requestOriginPermission(origin);
     grantBtn.hidden = true;
     fillCategories(await loadCategories());
     setStatus('');
