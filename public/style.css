@@ -49,6 +49,8 @@ main {
   color: #666;
 }
 .reorderBtn:hover { background: #f0f0f0; }
+.reorderBtn.active { background: #e0e0e0; }
+.reorderLbl { flex: 1; overflow-wrap: anywhere; color: #555; }
 .category ul { list-style: none; margin: 0; padding: 0; }
 .category li {
   display: flex;

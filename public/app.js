@@ -19,6 +19,7 @@ function esc(s) {
 }
 
 const hoverInfo = $('#hoverInfo');
+let reorderCategory = null;
 function startEdit(li, b) {
   const moveSel = li.querySelector('.moveSel');
   if (moveSel && !moveSel.hidden) moveSel.hidden = true;
@@ -84,9 +85,33 @@ function fillMoveSelect(sel, current) {
   sel.value = current;
 }
 
-function bookmarkRow(b) {
+function bookmarkRow(b, reordering) {
   const li = document.createElement('li');
   li.dataset.id = b.id;
+
+  if (reordering) {
+    const up = document.createElement('button');
+    up.className = 'rowBtn';
+    up.textContent = '↑';
+    up.title = 'Move up';
+    up.onclick = async () => {
+      try { await api('/api/bookmarks/' + b.id + '/up', { method: 'POST' }); render(); } catch (e) { alert('Error: ' + e.message); }
+    };
+    const down = document.createElement('button');
+    down.className = 'rowBtn';
+    down.textContent = '↓';
+    down.title = 'Move down';
+    down.onclick = async () => {
+      try { await api('/api/bookmarks/' + b.id + '/down', { method: 'POST' }); render(); } catch (e) { alert('Error: ' + e.message); }
+    };
+    const lbl = document.createElement('span');
+    lbl.textContent = b.title;
+    lbl.className = 'reorderLbl';
+    li.appendChild(up);
+    li.appendChild(down);
+    li.appendChild(lbl);
+    return li;
+  }
 
   const a = document.createElement('a');
   a.href = b.url;
@@ -159,6 +184,20 @@ function fillColumn(cat, bookmarks) {
   const span = document.createElement('span');
   span.textContent = `${cat.name} (${bookmarks.length})`;
   heading.appendChild(span);
+  const spacer = document.createElement('span');
+  spacer.style.flex = '1';
+  heading.appendChild(spacer);
+  const reordering = reorderCategory === cat.name;
+  const re = document.createElement('button');
+  re.className = 'reorderBtn';
+  re.textContent = '⇅';
+  re.title = reordering ? 'Exit reorder mode' : 'Reorder bookmarks';
+  re.onclick = () => {
+    reorderCategory = reordering ? null : cat.name;
+    render();
+  };
+  if (reordering) re.classList.add('active');
+  heading.appendChild(re);
   if (cat.name !== 'Home') {
     const up = document.createElement('button');
     up.className = 'reorderBtn';
@@ -179,7 +218,7 @@ function fillColumn(cat, bookmarks) {
   }
   div.appendChild(heading);
   const ul = document.createElement('ul');
-  for (const b of bookmarks) ul.appendChild(bookmarkRow(b));
+  for (const b of bookmarks) ul.appendChild(bookmarkRow(b, reordering));
   div.appendChild(ul);
   return div;
 }

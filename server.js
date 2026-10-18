@@ -242,6 +242,20 @@ route('PATCH', /^\/api\/bookmarks\/([a-z0-9]+)$/, async (req, res, id) => {
   send(res, 200, bm);
 });
 
+route('POST', /^\/api\/bookmarks\/([a-z0-9]+)\/(up|down)$/, (req, res, id, dir) => {
+  const i = store.bookmarks.findIndex((b) => b.id === id);
+  if (i === -1) return send(res, 404, { error: 'not found' });
+  const bm = store.bookmarks[i];
+  const j = dir === 'up' ? i - 1 : i + 1;
+  if (j < 0 || j >= store.bookmarks.length || store.bookmarks[j].category !== bm.category) {
+    return send(res, 200, { ok: true });
+  }
+  const [moved] = store.bookmarks.splice(i, 1);
+  store.bookmarks.splice(j, 0, moved);
+  persist();
+  send(res, 200, { ok: true });
+});
+
 route('GET', /^\/api\/bookmarks$/, (req, res) => {
   send(res, 200, store.bookmarks);
 });
