@@ -18,6 +18,7 @@ function esc(s) {
   return d.innerHTML;
 }
 
+const hoverInfo = $('#hoverInfo');
 function bookmarkRow(b) {
   const li = document.createElement('li');
   li.dataset.id = b.id;
@@ -32,6 +33,9 @@ function bookmarkRow(b) {
   info.className = 'info';
   info.textContent = 'i';
   info.title = 'Info';
+  li.addEventListener('mouseenter', () => {
+    hoverInfo.textContent = b.description || b.title;
+  });
   if (b.description) {
     info.onclick = () => li.querySelector('.desc').classList.toggle('open');
   } else {

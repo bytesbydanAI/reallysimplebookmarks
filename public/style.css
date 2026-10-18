@@ -77,21 +77,24 @@ main {
   overflow-wrap: anywhere;
 }
 .desc.open { display: block; }
+#hoverInfo {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 4px 12px;
+  background: #f5f5f5;
+  border-top: 1px solid #ddd;
+  font-size: 12px;
+  color: #444;
+  overflow-wrap: anywhere;
+  display: none;
+  z-index: 20;
+}
 @media (hover: hover) {
-  .category li { position: relative; }
-  .category li:hover .desc {
-    display: block;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 10;
-    margin: 0;
-    background: #fff;
-    border: 1px solid #ccc;
-    border-radius: 2px;
-    box-shadow: 0 2px 6px rgba(0,0,0,.15);
-  }
+  #hoverInfo { display: block; }
+  main { padding-bottom: 40px; }
 }
 .catActions { display: inline-flex; gap: 2px; }
 .catActions button {
