@@ -146,6 +146,24 @@ $('#delCategory').addEventListener('click', async () => {
   }
 });
 
+$('#importBtn').addEventListener('click', () => $('#importFile').click());
+$('#importFile').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const html = await file.text();
+    const res = await api('/api/import', { method: 'POST', body: JSON.stringify({ html }) });
+    await render();
+    alert(`Imported ${res.added} bookmark(s) into ${res.categories} category(s).`);
+  } catch (err) {
+    alert('Import failed: ' + err.message);
+  }
+});
+$('#exportBtn').addEventListener('click', () => {
+  window.location = '/api/export';
+});
+
 const addForm = $('#addBookmarkForm');
 const bmTitle = $('#bmTitle');
 const bmUrl = $('#bmUrl');

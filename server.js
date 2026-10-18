@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { parseBookmarksHtml, serializeBookmarksHtml } = require('./bookmarks-html');
 
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_DIR || '/data';
@@ -52,7 +53,7 @@ function readBody(req) {
     const chunks = [];
     req.on('data', (c) => {
       size += c.length;
-      if (size > 1024 * 1024) {
+      if (size > 20 * 1024 * 1024) {
         reject(new Error('too large'));
         req.destroy();
         return;
@@ -80,7 +81,70 @@ function route(method, pattern, handler) {
 }
 
 route('GET', /^\/api\/categories$/, (req, res) => {
-  send(res, 200, store.categories);
+  const def = store.categories.filter((c) => c.name === 'Default');
+  const others = store.categories.filter((c) => c.name !== 'Default');
+  send(res, 200, [...def, ...others]);
+});
+
+route('POST', /^\/api\/import$/, async (req, res) => {
+  const body = await readBody(req);
+  const html = typeof body.html === 'string' ? body.html : '';
+  if (!html) return send(res, 400, { error: 'html required' });
+
+  let parsed;
+  try {
+    parsed = parseBookmarksHtml(html);
+  } catch (e) {
+    return send(res, 400, { error: 'invalid bookmarks file: ' + e.message });
+  }
+
+  const catNames = new Set(parsed.folders.map((f) => f.name));
+  catNames.add('Default');
+  for (const name of catNames) {
+    if (!store.categories.find((c) => c.name === name)) {
+      store.categories.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name });
+    }
+  }
+
+  const seen = new Map();
+  for (const b of store.bookmarks) seen.set(b.url, b);
+
+  let added = 0;
+  const mk = (b, category) => {
+    if (seen.has(b.url)) return;
+    const bm = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      title: b.title.slice(0, 500),
+      url: b.url.slice(0, 2000),
+      category,
+      description: (b.description || '').slice(0, 2000),
+      created: Date.now(),
+    };
+    store.bookmarks.push(bm);
+    seen.set(b.url, bm);
+    added++;
+  };
+  for (const b of parsed.defaultBookmarks) mk(b, 'Default');
+  for (const f of parsed.folders) for (const b of f.bookmarks) mk(b, f.name);
+
+  persist();
+  send(res, 200, { added, categories: catNames.size });
+});
+
+route('GET', /^\/api\/export$/, (req, res) => {
+  const defaultBms = store.bookmarks.filter((b) => b.category === 'Default');
+  const byCat = {};
+  for (const b of store.bookmarks) {
+    if (b.category === 'Default') continue;
+    (byCat[b.category] = byCat[b.category] || []).push(b);
+  }
+  const html = serializeBookmarksHtml(defaultBms, byCat);
+  res.writeHead(200, {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Content-Disposition': 'attachment; filename="bookmarks.html"',
+    'Cache-Control': 'no-store',
+  });
+  res.end(html);
 });
 
 route('POST', /^\/api\/categories$/, async (req, res) => {
@@ -98,6 +162,7 @@ route('POST', /^\/api\/categories$/, async (req, res) => {
 route('DELETE', /^\/api\/categories\/([a-z0-9]+)$/, (req, res, id) => {
   const cat = store.categories.find((c) => c.id === id);
   if (!cat) return send(res, 404, { error: 'not found' });
+  if (cat.name === 'Default') return send(res, 400, { error: 'Default category cannot be deleted' });
   if (store.bookmarks.some((b) => b.category === cat.name)) {
     return send(res, 409, { error: 'category not empty' });
   }

@@ -52,7 +52,9 @@ The image is built and pushed by `.github/workflows/docker-publish.yml`.
 
 | Method | Path | Description |
 |---|---|---|
-| GET | `/api/categories` | List categories |
+| GET | `/api/export` | Download bookmarks as browser-compatible bookmarks.html |
+| POST | `/api/import` | Import bookmarks.html `{ html }` — dedupes by URL |
+| GET | `/api/categories` | List categories (Default always first) |
 | POST | `/api/categories` | Create category `{ name }` |
 | DELETE | `/api/categories/:id` | Delete a category (only if empty) |
 | GET | `/api/bookmarks` | List bookmarks |
@@ -65,6 +67,7 @@ The image is built and pushed by `.github/workflows/docker-publish.yml`.
 - Mobile: single column, filter/scroll via the category dropdown in the header.
 - Categories can be created (+) and deleted (−) via the header controls.
 - Bookmarks can be added on the site itself via the "+ Bookmark" button (category, title, URL, optional description) — useful on mobile, where no extension is available.
+- **Import/Export**: the header has Import/Export buttons for the standard browser bookmarks.html format (Netscape). On import, ungrouped toolbar bookmarks go to the **Default** category (always listed first); toolbar sub-folders and other folders become categories. Export reverses the mapping: Default → toolbar, categories → folders.
 - Descriptions show on hover (desktop) or via the ⓘ button next to each entry.
 
 ## Browser extension
