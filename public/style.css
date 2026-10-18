@@ -76,6 +76,7 @@ main {
   color: #444;
   overflow-wrap: anywhere;
 }
+.moveSel { font: inherit; max-width: 120px; }
 .desc.open { display: block; }
 #hoverInfo {
   position: sticky;

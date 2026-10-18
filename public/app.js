@@ -19,6 +19,19 @@ function esc(s) {
 }
 
 const hoverInfo = $('#hoverInfo');
+function fillMoveSelect(sel, current) {
+  sel.replaceChildren();
+  const allCats = [];
+  for (const o of filter.options) if (o.value) allCats.push(o.value);
+  for (const name of allCats) {
+    const o = document.createElement('option');
+    o.value = name;
+    o.textContent = name;
+    sel.appendChild(o);
+  }
+  sel.value = current;
+}
+
 function bookmarkRow(b) {
   const li = document.createElement('li');
   li.dataset.id = b.id;
@@ -44,6 +57,39 @@ function bookmarkRow(b) {
     info.style.cursor = 'default';
   }
   li.appendChild(info);
+
+  const move = document.createElement('button');
+  move.className = 'info';
+  move.textContent = '→';
+  move.title = 'Move to another category';
+  move.onclick = () => {
+    const sel = li.querySelector('.moveSel');
+    if (sel.hidden) {
+      sel.hidden = false;
+      fillMoveSelect(sel, b.category);
+      sel.focus();
+    } else {
+      sel.hidden = true;
+    }
+  };
+  li.appendChild(move);
+
+  const moveSel = document.createElement('select');
+  moveSel.className = 'moveSel';
+  moveSel.hidden = true;
+  moveSel.onchange = async () => {
+    if (!moveSel.value || moveSel.value === b.category) {
+      moveSel.hidden = true;
+      return;
+    }
+    try {
+      await api('/api/bookmarks/' + b.id, { method: 'PATCH', body: JSON.stringify({ category: moveSel.value }) });
+      render();
+    } catch (e) {
+      alert('Error: ' + e.message);
+    }
+  };
+  li.appendChild(moveSel);
 
   const del = document.createElement('button');
   del.className = 'del';
@@ -130,19 +176,42 @@ $('#addCategory').addEventListener('click', async () => {
   }
 });
 
-$('#delCategory').addEventListener('click', async () => {
+$('#renameCategory').addEventListener('click', async () => {
   const name = filter.value;
-  if (!name) return alert('Select a category to delete first.');
-  if (!confirm(`Delete category "${name}"?`)) return;
+  if (!name) return alert('Select a category to rename first.');
+  if (name === 'Default') return alert('Default category cannot be renamed.');
+  const newName = prompt(`Rename category "${name}" to:`, name);
+  if (!newName || !newName.trim() || newName.trim() === name) return;
   const cats = await api('/api/categories');
   const cat = cats.find((c) => c.name === name);
   if (!cat) return;
   try {
-    await api('/api/categories/' + cat.id, { method: 'DELETE' });
+    await api('/api/categories/' + cat.id, { method: 'PATCH', body: JSON.stringify({ name: newName.trim() }) });
+    filter.value = newName.trim();
+    await render();
+  } catch (e) {
+    alert(e.message === 'category already exists' ? 'A category with that name already exists.' : 'Error: ' + e.message);
+  }
+});
+
+$('#delCategory').addEventListener('click', async () => {
+  const name = filter.value;
+  if (!name) return alert('Select a category to delete first.');
+  const cats = await api('/api/categories');
+  const cat = cats.find((c) => c.name === name);
+  if (!cat) return;
+  const bms = await api('/api/bookmarks');
+  const count = bms.filter((b) => b.category === name).length;
+  const msg = count > 0
+    ? `Delete category "${name}" and its ${count} bookmark(s)? This cannot be undone.`
+    : `Delete category "${name}"?`;
+  if (!confirm(msg)) return;
+  try {
+    await api('/api/categories/' + cat.id + '?force=1', { method: 'DELETE' });
     filter.value = '';
     await render();
   } catch (e) {
-    alert(e.message === 'category not empty' ? `"${name}" still has bookmarks. Delete or move them first.` : 'Error: ' + e.message);
+    alert('Error: ' + e.message);
   }
 });
 

@@ -41,7 +41,7 @@ function send(res, status, body) {
     'Content-Type': 'application/json; charset=utf-8',
     'Cache-Control': 'no-store',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   });
   res.end(payload);
@@ -159,16 +159,59 @@ route('POST', /^\/api\/categories$/, async (req, res) => {
   send(res, 201, cat);
 });
 
+route('PATCH', /^\/api\/categories\/([a-z0-9]+)$/, async (req, res, id) => {
+  const cat = store.categories.find((c) => c.id === id);
+  if (!cat) return send(res, 404, { error: 'not found' });
+  if (cat.name === 'Default') return send(res, 400, { error: 'Default category cannot be renamed' });
+  const body = await readBody(req);
+  const name = cleanStr(body.name, 100);
+  if (!name) return send(res, 400, { error: 'name required' });
+  if (name === 'Default') return send(res, 400, { error: 'name reserved' });
+  if (store.categories.some((c) => c.id !== id && c.name.toLowerCase() === name.toLowerCase())) {
+    return send(res, 409, { error: 'category already exists' });
+  }
+  const oldName = cat.name;
+  cat.name = name;
+  for (const b of store.bookmarks) {
+    if (b.category === oldName) b.category = name;
+  }
+  persist();
+  send(res, 200, cat);
+});
+
 route('DELETE', /^\/api\/categories\/([a-z0-9]+)$/, (req, res, id) => {
   const cat = store.categories.find((c) => c.id === id);
   if (!cat) return send(res, 404, { error: 'not found' });
   if (cat.name === 'Default') return send(res, 400, { error: 'Default category cannot be deleted' });
-  if (store.bookmarks.some((b) => b.category === cat.name)) {
-    return send(res, 409, { error: 'category not empty' });
+  const count = store.bookmarks.filter((b) => b.category === cat.name).length;
+  if (count > 0 && !new URL(req.url, 'http://localhost').searchParams.get('force')) {
+    return send(res, 409, { error: 'category not empty', count });
   }
   store.categories = store.categories.filter((c) => c.id !== id);
+  store.bookmarks = store.bookmarks.filter((b) => b.category !== cat.name);
   persist();
   send(res, 200, { ok: true });
+});
+
+route('PATCH', /^\/api\/bookmarks\/([a-z0-9]+)$/, async (req, res, id) => {
+  const bm = store.bookmarks.find((b) => b.id === id);
+  if (!bm) return send(res, 404, { error: 'not found' });
+  const body = await readBody(req);
+  if (body.category !== undefined) {
+    const category = cleanStr(body.category, 100);
+    if (!store.categories.find((c) => c.name.toLowerCase() === category.toLowerCase())) {
+      return send(res, 400, { error: 'unknown category' });
+    }
+    bm.category = category;
+  }
+  if (body.title !== undefined) {
+    const title = cleanStr(body.title, 500);
+    if (!title) return send(res, 400, { error: 'title required' });
+    bm.title = title;
+  }
+  if (body.description !== undefined) bm.description = cleanStr(body.description, 2000);
+  persist();
+  send(res, 200, bm);
 });
 
 route('GET', /^\/api\/bookmarks$/, (req, res) => {
