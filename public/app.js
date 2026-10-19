@@ -444,10 +444,8 @@ filter.addEventListener('change', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    const headerH = document.querySelector('header').offsetHeight;
-    const form = $('#addBookmarkForm');
-    const extra = !form.hidden ? form.offsetHeight : 0;
-    window.scrollTo({ top: Math.max(0, columns.offsetTop - headerH - extra), behavior: 'smooth' });
+    const topbarH = document.getElementById('topbar').offsetHeight;
+    window.scrollTo({ top: Math.max(0, columns.offsetTop - topbarH), behavior: 'smooth' });
   });
 });
 

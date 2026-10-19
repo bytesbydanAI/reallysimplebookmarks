@@ -5,11 +5,13 @@ body {
   color: #222;
   background: #fff;
 }
-header {
+#topbar {
   position: sticky;
   top: 0;
   z-index: 30;
   background: #fff;
+}
+header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -118,8 +120,6 @@ li.editing .editForm button[type="submit"] { align-self: flex-start; }
    header), never at the bottom — browsers show a link-URL preview in the
    bottom-left corner which would cover it. Do not move it to bottom. */
 #hoverInfo {
-  position: sticky;
-  top: 41px;
   margin: 0;
   padding: 3px 12px;
   background: #f5f5f5;
@@ -149,9 +149,6 @@ li.editing .editForm button[type="submit"] { align-self: flex-start; }
 #addBookmarkBtn { white-space: nowrap; }
 .danger { color: #b00; }
 #addBookmarkForm {
-  position: sticky;
-  top: 41px;
-  z-index: 25;
   display: flex;
   flex-direction: column;
   gap: 6px;
