@@ -444,13 +444,10 @@ filter.addEventListener('change', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    for (const col of columns.children) {
-      const name = col.querySelector('h2 .catName');
-      if (name && name.textContent === filter.value) {
-        window.scrollTo({ top: col.offsetTop, behavior: 'smooth' });
-        break;
-      }
-    }
+    const headerH = document.querySelector('header').offsetHeight;
+    const form = $('#addBookmarkForm');
+    const extra = !form.hidden ? form.offsetHeight : 0;
+    window.scrollTo({ top: Math.max(0, columns.offsetTop - headerH - extra), behavior: 'smooth' });
   });
 });
 
