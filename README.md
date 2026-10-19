@@ -70,6 +70,7 @@ The image is built and pushed by `.github/workflows/docker-publish.yml`.
 
 - Desktop: categories laid out in multiple columns (auto-fitting grid).
 - Mobile: single column, filter/scroll via the category dropdown in the header.
+- Overview shows the first 12 entries per category; a "+N more" marker links to the category detail view. Click a category header to open its detail page (all entries), click it again to return to the overview.
 - Categories can be created (+), renamed (✎), and deleted (−) via the header controls. Deleting shows the entry count and confirmation; ⚠ deletion also removes the category's bookmarks.
 - Each column heading shows its position as (0), (1), … — click the number and enter a new position to reorder; others shift automatically. Home is always (0). Bookmark order: click ⇅ on a column heading to enter reorder mode (rows become inert and show index numbers), click an index and enter the new position to move it, click ⇅ again to exit. A legacy "Default" category is automatically renamed to Home on first start.
 - Each entry has a ✎ button to edit its title, URL, and description, and a → button to move it to another category.

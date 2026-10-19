@@ -186,7 +186,8 @@ function bookmarkRow(b, reordering, rank) {
 }
 
 let fullCategoryList = [];
-function fillColumn(cat, bookmarks, position) {
+const OVERVIEW_LIMIT = 12;
+function fillColumn(cat, bookmarks, position, detail) {
   const div = document.createElement('div');
   div.className = 'category';
   const heading = document.createElement('h2');
@@ -215,10 +216,27 @@ function fillColumn(cat, bookmarks, position) {
   const span = document.createElement('span');
   span.className = 'catName';
   span.textContent = cat.name;
+  span.title = detail ? 'Back to overview' : 'Open category';
+  span.style.cursor = 'pointer';
+  span.onclick = () => {
+    filter.value = detail ? '' : cat.name;
+    filter.dispatchEvent(new Event('change'));
+  };
   heading.appendChild(span);
   const spacer = document.createElement('span');
   spacer.style.flex = '1';
   heading.appendChild(spacer);
+  if (!detail && bookmarks.length > OVERVIEW_LIMIT) {
+    const more = document.createElement('span');
+    more.className = 'moreMarker';
+    more.textContent = `+${bookmarks.length - OVERVIEW_LIMIT} more`;
+    more.title = 'Click to show all entries';
+    more.onclick = () => {
+      filter.value = cat.name;
+      filter.dispatchEvent(new Event('change'));
+    };
+    heading.appendChild(more);
+  }
   const reordering = reorderCategory === cat.name;
   if (reordering) reorderTotal = bookmarks.length;
   const re = document.createElement('button');
@@ -233,7 +251,8 @@ function fillColumn(cat, bookmarks, position) {
   heading.appendChild(re);
   div.appendChild(heading);
   const ul = document.createElement('ul');
-  bookmarks.forEach((b, idx) => ul.appendChild(bookmarkRow(b, reordering, idx)));
+  const shown = detail ? bookmarks : bookmarks.slice(0, OVERVIEW_LIMIT);
+  shown.forEach((b, idx) => ul.appendChild(bookmarkRow(b, reordering, detail ? idx : bookmarks.indexOf(b))));
   div.appendChild(ul);
   return div;
 }
@@ -279,7 +298,7 @@ async function render() {
 
   order.forEach((cat, idx) => {
     const fullPos = fullCategoryList.findIndex((c) => c.id === cat.id);
-    columns.appendChild(fillColumn(cat, byCat.get(cat.name), fullPos));
+    columns.appendChild(fillColumn(cat, byCat.get(cat.name), fullPos, !!selected));
   });
 }
 
