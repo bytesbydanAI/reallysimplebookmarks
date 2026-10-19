@@ -114,15 +114,16 @@ li.editing .editForm {
 li.editing .editForm input { font: inherit; padding: 2px 4px; border: 1px solid #bbb; }
 li.editing .editForm button { font: inherit; padding: 2px 10px; width: auto; }
 li.editing .editForm button[type="submit"] { align-self: flex-start; }
+/* NOTE: the hover description bar must stay at the TOP of the page (below the
+   header), never at the bottom — browsers show a link-URL preview in the
+   bottom-left corner which would cover it. Do not move it to bottom. */
 #hoverInfo {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: sticky;
+  top: 41px;
   margin: 0;
-  padding: 4px 12px;
+  padding: 3px 12px;
   background: #f5f5f5;
-  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
   font-size: 12px;
   color: #444;
   overflow-wrap: anywhere;
@@ -132,7 +133,6 @@ li.editing .editForm button[type="submit"] { align-self: flex-start; }
 }
 @media (hover: hover) {
   #hoverInfo { display: block; }
-  main { padding-bottom: 30px; }
 }
 .catActions { display: inline-flex; gap: 2px; }
 .catActions button {
