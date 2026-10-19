@@ -125,6 +125,7 @@ function bookmarkRow(b, reordering, rank) {
   a.href = b.url;
   a.textContent = b.title;
   a.rel = 'noopener noreferrer';
+  a.target = '_blank';
   li.appendChild(a);
 
   li.addEventListener('mouseenter', () => {
